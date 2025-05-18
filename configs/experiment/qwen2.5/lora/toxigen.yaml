@@ -1,0 +1,56 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /data: toxigen
+  - override /model: qwen2.5/base.yaml
+  - override /model_eval: qwen2.5/base.yaml
+  - override /adapter: lora.yaml
+  - override /scheduler: linear_warmup.yaml
+
+adapter:
+  target_modules:
+    - q_proj
+    - v_proj
+    - k_proj
+  lora_alpha: 16
+
+data:
+  batch_size: 8
+
+logger:
+  wandb:
+    project: uncertainty-estimation-sr-ft-toxigen
+
+scheduler:
+  base_lr: ${model.optimizer.lr}
+  final_lr: 0
+  warmup_epochs: 5
+
+model:
+  optimizer:
+    lr: 5e-4
+    weight_decay: 1e-1
+  model:
+    model:
+      torch_dtype:
+        path: ${dtype}
+
+model_eval:
+  model:
+    model:
+      torch_dtype:
+        path: ${dtype}
+
+dtype: torch.bfloat16
+
+optimize_metric_name: val/acc
+
+trainer:
+  max_epochs: 30
+  precision: bf16-mixed
+  accumulate_grad_batches: 8
+
+base_architecture: Qwen/Qwen2.5-7B

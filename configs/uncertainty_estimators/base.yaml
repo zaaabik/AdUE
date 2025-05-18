@@ -1,0 +1,6 @@
+- _target_: src.uncertainty.estimators.MaxProbabilityUncertaintyEstimator
+- _target_: src.uncertainty.estimators.EnsembleStdUncertaintyEstimator
+#- _target_: src.uncertainty.output_transform.MeanTransform
+#  transform_feature: predictions
+#  axis: 0
+#  output_name: mean_predictions

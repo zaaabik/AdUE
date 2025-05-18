@@ -1,0 +1,27 @@
+defaults:
+  - _self_
+  - data: toxigen
+  - model: llama_7b
+  - model_eval: llama_7b_eval
+  - callbacks: default
+  - trainer: gpu
+  - adapter: null
+  - scheduler: null
+  - experiment: null
+  - paths: default
+  - extras: default
+  - hydra: default
+  - optional local: default
+
+task_name: predict
+base_architecture: meta-llama/Llama-2-7b-hf
+
+output_folder: prediction/test/
+pretrained_model_path: ${paths.root_dir}/outputs/2024-03-09/22-27-50/checkpoints
+
+optimize_metric_name: val/roc-auc
+optimize_metric_mode: max
+
+best_model_from_callback: false
+
+seed: 1337

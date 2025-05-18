@@ -1,0 +1,5 @@
+_target_: src.utils.scheduler.LinearWarmupScheduler
+warmup_epochs: 5
+total_epochs: ${trainer.max_epochs}
+base_lr: 1e-3
+final_lr: 1e-7

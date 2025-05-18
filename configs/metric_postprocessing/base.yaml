@@ -1,0 +1,13 @@
+actions:
+  - _target_: src.uncertainty.metrics.MetricSummationCoefficient
+    metric_name: 'Risk Coverage curve auc | max_prob | ↓'
+    output_name: prediction_max_prob_coefficients
+    higher_is_better: false
+  - _target_: src.uncertainty.estimators.MaxProbabilityWithCoefficientUncertaintyEstimator
+    prediction_field: prediction_max_prob_coefficients
+    output_name: ensemble_max_prob_coefficients
+metrics:
+  - _target_: src.uncertainty.metrics.RCAUCMetric
+    ue_estimator_field: max_prob_coefficients
+    prediction_field: predictions
+    target_field: label_ids

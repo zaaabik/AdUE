@@ -1,0 +1,14 @@
+_target_: peft.LoraConfig
+_convert_: object
+base_model_name_or_path: ${base_architecture}
+inference_mode: false
+r: 8
+lora_alpha: 32
+target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+task_type: SEQ_CLS
+modules_to_save:
+  - score

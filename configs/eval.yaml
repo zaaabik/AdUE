@@ -1,0 +1,10 @@
+defaults:
+  - _self_
+  - eval_metrics: base
+  - uncertainty_estimators: base
+  - metric_postprocessing: base
+
+task_name: eval
+glob_predict_folder: prediction/toxigen_ensemble/zaaabik/*/prediction.pkl
+
+seed: 1337

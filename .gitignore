@@ -1,0 +1,7 @@
+.idea/*
+/prediction/
+/multirun/
+/logs/
+__pycache__/
+outputs/
+.env

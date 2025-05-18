@@ -1,0 +1,26 @@
+defaults:
+  - _self_
+  - grid: base.yaml
+  - experiment: null
+
+model_name: llama
+data:
+  name: CoLa
+  dataset:
+    _target_: src.dataset.sequence_classification.${data.name}
+  max_length: 128
+  llm_batch_size: 64
+  smooth_head_batch_size: 128
+  num_workers: 0
+model:
+  torch_dtype:
+    _target_: hydra.utils.get_object
+    path: torch.bfloat16
+  num_labels: 0
+adapter:
+  path: ${oc.env:BASE_WEIGHT_PATH}/${model_name}_runs_seeds/${data.name}/${seed}/
+seed: 0
+save_dir: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/
+train_on_dataset: train
+extract_features:
+  layer_number: -1

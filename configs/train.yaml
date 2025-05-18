@@ -1,0 +1,36 @@
+defaults:
+  - _self_
+  - data: toxigen
+  - model: mistral_7b/base.yaml
+  - model_eval: mistral_7b/base.yaml
+  - callbacks: default
+  - logger: wandb
+  - trainer: gpu
+  - adapter: null
+  - scheduler: reduce_lr_on_plateau.yaml
+  - experiment: null
+  - hparams_search: null
+  - paths: default
+  - extras: default
+  - hydra: default
+  - optional local: default
+
+  # debugging config (enable through command line, e.g. `python train.py debug=default)
+  - debug: null
+
+base_architecture: meta-llama/Llama-2-7b-hf
+
+optimize_metric_name: val/roc-auc
+optimize_metric_mode: max
+
+max_length: 512
+# tasks
+task_name: train
+train: true
+test: true
+
+seed: 1337
+
+tags: []
+
+pretrained_model_path: null

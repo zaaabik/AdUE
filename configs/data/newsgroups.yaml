@@ -1,0 +1,16 @@
+_target_: src.data.text_module.TextDataModule
+_recursive_: false
+num_labels: 20
+dataset:
+  _target_: src.dataset.sequence_classification.NewsGroups
+batch_size: 8
+num_workers: 0
+pin_memory: False
+collate_fn:
+  _target_: transformers.DataCollatorWithPadding
+  return_tensors: pt
+  padding: longest
+  max_length: 512
+tokenizer:
+  _target_: transformers.AutoTokenizer.from_pretrained
+  pretrained_model_name_or_path: ${base_architecture}
