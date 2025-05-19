@@ -4,7 +4,6 @@ from omegaconf import DictConfig
 
 # pylint: disable=wrong-import-position
 import rootutils
-from torch.utils.data import DataLoader
 
 import os
 import random

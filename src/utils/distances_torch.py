@@ -1,5 +1,4 @@
 import torch
-from tqdm import tqdm
 
 
 def compute_centroids(train_features, train_labels, class_cond=True):
