@@ -1,4 +1,5 @@
 import hydra
+import pickle
 import pandas as pd
 from omegaconf import DictConfig
 
@@ -199,7 +200,7 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
             all_labels.extend(val_labels.cpu().numpy().tolist())
 
     auc = roc_auc_score(np.array(all_labels), np.array(all_preds))
-    return auc
+    return auc, np.array(all_preds), np.array(all_labels)
 
 
 def search_hyperparameters(
@@ -258,7 +259,7 @@ def search_hyperparameters(
                                     l2sp_alpha=l2sp_alpha,
                                     smooth_batch_size=smooth_batch_size,
                                 )
-                                val_auc = evaluate_smooth_head(
+                                val_auc, predicted_val_pred, predicted_val_target = evaluate_smooth_head(
                                     candidate_head, val_features, val_labels, device
                                 )
 
@@ -272,7 +273,7 @@ def search_hyperparameters(
                                     # best_state = candidate_head.state_dict()
                                     best_load_weights = load_weights
 
-                                    test_auc = evaluate_smooth_head(
+                                    test_auc, predicted_test_pred, predicted_test_target = evaluate_smooth_head(
                                         candidate_head, test_features, test_labels, device
                                     )
 
@@ -336,22 +337,28 @@ def search_hyperparameters(
                                         full_save_path,
                                         index=False
                                     )
+
+                                    result_dict = {
+                                        'metric_df': metric_df,
+                                        'original_model_scores': {
+                                            'logits': np.array(test_logits),
+                                            'targets': np.array(test_original_targets),
+                                        },
+                                        'adue_uncertainty_head_scores': {
+                                            'logits': np.array(predicted_test_pred),
+                                            'targets': np.array(predicted_test_target)
+                                        }
+                                    }
+
+                                    with open(
+                                            os.path.join(
+                                                cfg.save_dir,
+                                                f"{adapter_name}_{dataset_name}_smooth_classifier_one_cycle_lr_l2sp_probe.csv"
+                                            ), 'wb'
+                                    ) as f:
+                                        pickle.dump(result_dict, f)
                                 trial += 1
                                 pbar_main.update(1)
-
-    # final_head = SmoothMaxClassifierHead(
-    #     original_head, config=model.config, lam=best_lam,
-    # ).to(device=device, dtype=torch_device)
-    # final_head.load_state_dict(best_state)
-    # return (
-    #     final_head,
-    #     best_lr,
-    #     best_epochs,
-    #     best_lam,
-    #     best_reg_alpha,
-    #     best_l2sp_alpha,
-    #     best_val_auc,
-    # )
 
 
 def train(cfg):
