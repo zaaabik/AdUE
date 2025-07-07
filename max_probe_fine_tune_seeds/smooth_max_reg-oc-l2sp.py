@@ -353,7 +353,7 @@ def search_hyperparameters(
                                     with open(
                                             os.path.join(
                                                 cfg.save_dir,
-                                                f"{adapter_name}_{dataset_name}_smooth_classifier_one_cycle_lr_l2sp_probe.csv"
+                                                f"{adapter_name}_{dataset_name}_smooth_classifier_one_cycle_lr_l2sp_probe.pkl"
                                             ), 'wb'
                                     ) as f:
                                         pickle.dump(result_dict, f)
