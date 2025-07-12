@@ -233,8 +233,6 @@ def search_hyperparameters(
                                     candidate_head, val_features, val_labels, device
                                 )
 
-
-                                best_val_auc = val_auc
                                 best_lr = lr
                                 best_epochs = ep
                                 best_lam = lam

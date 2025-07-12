@@ -20,7 +20,7 @@ model:
 adapter:
   path: ${oc.env:BASE_WEIGHT_PATH}/${model_name}_runs_seeds/${data.name}/${seed}/
 seed: 0
-save_dir: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/
+save_dir: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/results/${model_name}_results_ds_${seed}_${train_on_dataset}_gird_${grid.name}
 train_on_dataset: train
 extract_features:
   layer_number: -1
