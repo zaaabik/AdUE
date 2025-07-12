@@ -47,7 +47,7 @@ def train(cfg):
     best_run, all_runs = search_hyperparameters(**state)
 
     current_output_dir = os.path.join(cfg.save_dir, cfg.data.name)
-    os.makedirs(cfg.save_dir, exist_ok=True)
+    os.makedirs(current_output_dir, exist_ok=True)
     with open(os.path.join(current_output_dir, 'best_run.pickle'), 'wb') as f:
         pickle.dump(best_run, f)
 
