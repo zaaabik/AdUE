@@ -474,27 +474,30 @@ def train(cfg):
         model, test_dataloader, device, pooling
     )
 
+    def to_cpu(t):
+        return torch.tensor(t).detach().cpu()
+
     state = dict(
         model_cfg=model.config,
-        original_head=original_head,
+        original_head=original_head.cpu(),
 
-        train_features=train_features,
-        train_labels=train_labels,
-        train_max_probs=train_max_probs,
-        train_logits=train_logits,
-        train_original_target=train_original_target,
+        train_features=to_cpu(train_features),
+        train_labels=to_cpu(train_labels),
+        train_max_probs=to_cpu(train_max_probs),
+        train_logits=to_cpu(train_logits),
+        train_original_target=to_cpu(train_original_target),
 
-        val_features=val_features.float(),
-        val_labels=val_labels,
-        val_max_probs=val_max_probs.float(),
-        val_logits=val_logits.float(),
-        val_original_targets=val_original_target,
+        val_features=to_cpu(val_features.float()),
+        val_labels=to_cpu(val_labels),
+        val_max_probs=to_cpu(val_max_probs.float()),
+        val_logits=to_cpu(val_logits.float()),
+        val_original_targets=to_cpu(val_original_target),
 
-        test_features=test_features.float(),
-        test_labels=test_labels.float(),
-        test_max_probs=test_max_probs.float(),
-        test_logits=test_logits.float(),
-        test_original_targets=test_original_targets,
+        test_features=to_cpu(test_features.float()),
+        test_labels=to_cpu(test_labels.float()),
+        test_max_probs=to_cpu(test_max_probs.float()),
+        test_logits=to_cpu(test_logits.float()),
+        test_original_targets=to_cpu(test_original_targets),
 
         device=device,
         smooth_batch_size=cfg.data.smooth_head_batch_size,
