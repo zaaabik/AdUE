@@ -1,7 +1,4 @@
-import pickle
 import pandas as pd
-
-import os
 
 import numpy as np
 import torch
@@ -283,7 +280,8 @@ def search_hyperparameters(
                                         'adue_uncertainty_head_scores': {
                                             'logits': np.array(predicted_test_pred),
                                             'targets': np.array(predicted_test_target)
-                                        }
+                                        },
+                                        'layer_state': candidate_head.cpu().state_dict()
                                     }
                                     best_state = result_dict
                                 trial += 1
