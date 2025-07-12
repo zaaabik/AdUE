@@ -28,6 +28,7 @@ torch.backends.cudnn.benchmark = False
 
 def train(cfg):
     os.makedirs(cfg.save_dir, exist_ok=True)
+
     state = pd.read_pickle(cfg.embedding_path)
     del state['train_logits']
     del state['train_original_target']
@@ -44,11 +45,13 @@ def train(cfg):
     state['test_max_probs'] = state['test_max_probs'] / scale_factor
 
     best_run, all_runs = search_hyperparameters(**state)
-    f"dataset_name_smooth_classifier_one_cycle_lr_l2sp_probe.pkl"
-    with open(os.path.join(cfg.save_dir, cfg.data.name, 'best_run.pickle'), 'wb') as f:
+
+    current_output_dir = os.path.join(cfg.save_dir, cfg.data.name)
+    os.makedirs(cfg.save_dir, exist_ok=True)
+    with open(os.path.join(current_output_dir, 'best_run.pickle'), 'wb') as f:
         pickle.dump(best_run, f)
 
-    with open(os.path.join(cfg.save_dir, cfg.data.name, 'all_runs.pickle'), 'wb') as f:
+    with open(os.path.join(current_output_dir, 'all_runs.pickle'), 'wb') as f:
         pickle.dump(all_runs, f)
 
 
