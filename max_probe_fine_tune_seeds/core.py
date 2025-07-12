@@ -127,7 +127,14 @@ def train_smooth_head(
 
             optimizer.zero_grad()
             outputs = smooth_head(feats.to(dtype=torch.float32))
-            loss_main = criterion(outputs.float(), labs)
+
+            try:
+                loss_main = criterion(outputs.float(), labs)
+            except:
+                print(outputs.float())
+                print(outputs.max(), outputs.min())
+                1/0
+
             reg_loss = torch.mean((outputs - max_probs) ** 2)
 
             l2sp_loss = 0.0
