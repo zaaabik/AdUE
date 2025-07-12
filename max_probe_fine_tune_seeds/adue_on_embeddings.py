@@ -33,6 +33,7 @@ def train(cfg):
     del state['train_original_target']
     device = "cuda" if torch.cuda.is_available() else "cpu"
     state['device'] = device
+    state['cfg']['grid'] = cfg.grid
 
     num_classes = state['test_logits'].size(1)
     scale_factor = 1 - (1 / num_classes)
