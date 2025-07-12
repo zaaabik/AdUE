@@ -477,19 +477,25 @@ def train(cfg):
     state = dict(
         model_cfg=model.config,
         original_head=original_head,
+
         train_features=train_features,
         train_labels=train_labels,
         train_max_probs=train_max_probs,
+        train_logits=train_logits,
+        train_original_target=train_original_target,
+
         val_features=val_features.float(),
         val_labels=val_labels,
         val_max_probs=val_max_probs.float(),
         val_logits=val_logits.float(),
         val_original_targets=val_original_target,
+
         test_features=test_features.float(),
         test_labels=test_labels.float(),
         test_max_probs=test_max_probs.float(),
         test_logits=test_logits.float(),
         test_original_targets=test_original_targets,
+
         device=device,
         smooth_batch_size=cfg.data.smooth_head_batch_size,
         adapter_name=adapter_name,
