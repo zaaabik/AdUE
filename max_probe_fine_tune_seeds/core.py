@@ -15,6 +15,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 torch_device = torch.bfloat16
 batch_size = 256
 
+generator = torch.Generator().manual_seed(42)
+
 
 class SmoothMaxClassifierHead(nn.Module):
     def __init__(self, original_lm_head: nn.Linear, config, lam: float = 10.0, load_weights: str = 'cls'):
@@ -248,7 +250,7 @@ def search_hyperparameters(
                                             assert np.allclose(max_prob_val, max_prob_val_v2)
 
                                     current_state = {
-                                        'model': model.config._name_or_path,
+                                        'model': model_cfg._name_or_path,
                                         'adapter': adapter_name,
                                         'dataset': dataset_name,
                                         'train_on_dataset': cfg.train_on_dataset,
