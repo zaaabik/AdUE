@@ -9,7 +9,6 @@ from transformers.models.electra.modeling_electra import ElectraClassificationHe
 from transformers.models.roberta.modeling_roberta import RobertaClassificationHead
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-torch_device = torch.bfloat16
 batch_size = 256
 
 generator = torch.Generator().manual_seed(42)
@@ -189,7 +188,7 @@ def search_hyperparameters(
                                 })
                                 candidate_head = SmoothMaxClassifierHead(
                                     original_head, config=model_cfg, lam=lam, load_weights=load_weights
-                                ).to(device=device, dtype=torch_device)
+                                ).to(device=device, dtype=torch.float32)
                                 candidate_head = train_smooth_head(
                                     candidate_head,
                                     train_features,
