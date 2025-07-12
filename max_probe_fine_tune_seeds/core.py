@@ -47,7 +47,7 @@ class SmoothMaxClassifierHead(nn.Module):
         p = torch.softmax(x, dim=1)
         smooth_max = (1 / self.lam) * torch.logsumexp(self.lam * p, dim=1)
         f_smooth = 1 - smooth_max
-        return torch.clamp(f_smooth, min=1e-7, max=1 - 1e-7) * 2.
+        return torch.clamp(f_smooth * 2., min=1e-7, max=1 - 1e-7)
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
