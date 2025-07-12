@@ -56,12 +56,11 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
     all_preds = []
     all_labels = []
 
-    with torch.autocast(device_type=device, dtype=torch.float32):
-        with torch.no_grad():
-            feats = val_features.to(device)
-            smooth_val = smooth_head(feats)
-            all_preds.extend(smooth_val.float().cpu().numpy().tolist())
-            all_labels.extend(val_labels.cpu().numpy().tolist())
+    with torch.no_grad():
+        feats = val_features.to(device, dtype=torch.float32)
+        smooth_val = smooth_head(feats)
+        all_preds.extend(smooth_val.float().cpu().numpy().tolist())
+        all_labels.extend(val_labels.cpu().numpy().tolist())
 
     auc = roc_auc_score(np.array(all_labels), np.array(all_preds))
     return auc, np.array(all_preds), np.array(all_labels)
@@ -124,8 +123,7 @@ def train_smooth_head(
             )
 
             optimizer.zero_grad()
-            with torch.autocast(device_type=device, dtype=torch.float32):
-                outputs = smooth_head(feats)
+            outputs = smooth_head(feats.to(dtype=torch.float32))
             loss_main = criterion(outputs.float(), labs)
             reg_loss = torch.mean((outputs - max_probs) ** 2)
 
@@ -220,30 +218,29 @@ def search_hyperparameters(
                                     )
 
                                     # Calculate accuracy and max_prob metrics for logging
-                                    with torch.autocast(device_type=device):
-                                        with torch.no_grad():
-                                            # print(test_original_targets.shape, test_original_targets.shape)
-                                            test_errors = test_original_targets != test_logits.argmax(dim=-1)
+                                    with torch.no_grad():
+                                        # print(test_original_targets.shape, test_original_targets.shape)
+                                        test_errors = test_original_targets != test_logits.argmax(dim=-1)
 
-                                            test_acc = (
-                                                    test_logits.argmax(dim=1) == test_original_targets
-                                            ).float().mean().item()
+                                        test_acc = (
+                                                test_logits.argmax(dim=1) == test_original_targets
+                                        ).float().mean().item()
 
-                                            test_max_prob_auc = roc_auc_score(test_errors, test_max_probs)
-                                            test_max_prob_auc_v2 = roc_auc_score(
-                                                (test_logits.argmax(dim=1) != test_original_targets),
-                                                1 - (torch.softmax(test_logits, dim=1).amax(dim=1))
-                                            )
-                                            assert np.allclose(test_max_prob_auc, test_max_prob_auc_v2)
-                                            assert torch.all(test_errors == test_labels)
+                                        test_max_prob_auc = roc_auc_score(test_errors, test_max_probs)
+                                        test_max_prob_auc_v2 = roc_auc_score(
+                                            (test_logits.argmax(dim=1) != test_original_targets),
+                                            1 - (torch.softmax(test_logits, dim=1).amax(dim=1))
+                                        )
+                                        assert np.allclose(test_max_prob_auc, test_max_prob_auc_v2)
+                                        assert torch.all(test_errors == test_labels)
 
-                                            val_acc = (val_logits.argmax(dim=-1) == val_original_targets).float().mean().item()
-                                            max_prob_val = roc_auc_score(val_labels, val_max_probs)
-                                            max_prob_val_v2 = roc_auc_score(
-                                                val_logits.argmax(dim=-1) != val_original_targets,
-                                                1 - torch.softmax(val_logits, dim=1).amax(dim=-1)
-                                            )
-                                            assert np.allclose(max_prob_val, max_prob_val_v2)
+                                        val_acc = (val_logits.argmax(dim=-1) == val_original_targets).float().mean().item()
+                                        max_prob_val = roc_auc_score(val_labels, val_max_probs)
+                                        max_prob_val_v2 = roc_auc_score(
+                                            val_logits.argmax(dim=-1) != val_original_targets,
+                                            1 - torch.softmax(val_logits, dim=1).amax(dim=-1)
+                                        )
+                                        assert np.allclose(max_prob_val, max_prob_val_v2)
 
                                     current_state = {
                                         'model': model_cfg._name_or_path,
