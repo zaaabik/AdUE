@@ -39,7 +39,9 @@ class SmoothMaxClassifierHead(nn.Module):
         else:
             raise ValueError(f'Load weight unknown {load_weights}')
         self.lam = torch.nn.Parameter(torch.tensor(lam), requires_grad=False)
-        self.scaler = torch.nn.Parameter(torch.tensor(1 - (1/num_classes)), requires_grad=False)
+        self.scaler = torch.nn.Parameter(torch.tensor(
+            1 - 1 / num_classes
+        ), requires_grad=False)
 
     def forward(self, cls_token):
         if self.need_to_add_dim:
@@ -48,7 +50,7 @@ class SmoothMaxClassifierHead(nn.Module):
         p = torch.softmax(x, dim=1)
         smooth_max = (1 / self.lam) * torch.logsumexp(self.lam * p, dim=1)
         f_smooth = 1 - smooth_max
-        return f_smooth * self.scaler
+        return f_smooth / self.scaler
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
