@@ -148,7 +148,7 @@ def train_smooth_head(
 
 
 def search_hyperparameters(
-        model, original_head, train_features, train_labels, train_max_probs,
+        model_cfg, original_head, train_features, train_labels, train_max_probs,
         val_features, val_labels, val_max_probs, val_logits, val_original_targets,
         test_features, test_labels, test_max_probs, test_logits, test_original_targets,
         device, smooth_batch_size, adapter_name, dataset_name, cfg
@@ -189,7 +189,7 @@ def search_hyperparameters(
                                     'best_auc': f"{best_val_auc:.4f}"
                                 })
                                 candidate_head = SmoothMaxClassifierHead(
-                                    original_head, config=model.config, lam=lam, load_weights=load_weights
+                                    original_head, config=model_cfg, lam=lam, load_weights=load_weights
                                 ).to(device=device, dtype=torch_device)
                                 candidate_head = train_smooth_head(
                                     candidate_head,
