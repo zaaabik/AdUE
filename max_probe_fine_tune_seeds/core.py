@@ -15,7 +15,7 @@ generator = torch.Generator().manual_seed(42)
 
 
 class SmoothMaxClassifierHead(nn.Module):
-    def __init__(self, original_lm_head: nn.Linear, config, lam: float = 10.0, load_weights: str = 'cls'):
+    def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls'):
         super().__init__()
         if isinstance(original_lm_head, torch.nn.Linear):
             self.head = torch.nn.Linear(
@@ -39,6 +39,7 @@ class SmoothMaxClassifierHead(nn.Module):
         else:
             raise ValueError(f'Load weight unknown {load_weights}')
         self.lam = torch.nn.Parameter(torch.tensor(lam), requires_grad=False)
+        self.scaler = torch.nn.Parameter(torch.tensor(1 - (1/num_classes)), requires_grad=False)
 
     def forward(self, cls_token):
         if self.need_to_add_dim:
@@ -47,7 +48,7 @@ class SmoothMaxClassifierHead(nn.Module):
         p = torch.softmax(x, dim=1)
         smooth_max = (1 / self.lam) * torch.logsumexp(self.lam * p, dim=1)
         f_smooth = 1 - smooth_max
-        return f_smooth * 2.
+        return f_smooth * self.scaler
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
@@ -157,6 +158,7 @@ def search_hyperparameters(
     best_val_auc = -1
     trial = 0
     grid = cfg.grid
+    num_classes = test_logits.size(1)
 
     total_experiments = (
         len(grid.reg_alpha_candidates) *
@@ -209,7 +211,9 @@ def search_hyperparameters(
                                     'best_auc': f"{best_val_auc:.4f}"
                                 })
                                 candidate_head = SmoothMaxClassifierHead(
-                                    original_head, config=model_cfg, lam=lam, load_weights=load_weights
+                                    original_head, config=model_cfg,
+                                    num_classes=num_classes, lam=lam,
+                                    load_weights=load_weights,
                                 ).to(device=device, dtype=torch.float32)
                                 candidate_head = train_smooth_head(
                                     candidate_head,
