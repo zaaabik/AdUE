@@ -133,11 +133,11 @@ def train_smooth_head(
                     l2sp_loss += torch.sum((param - initial_params[name]) ** 2)
 
             reg_loss_with_alpha = reg_alpha * reg_loss
-            print(f'Reg loss: {reg_loss_with_alpha} before mult: {reg_loss}')
+            # print(f'Reg loss: {reg_loss_with_alpha} before mult: {reg_loss}')
             l2sp_loss_with_alpha = l2sp_alpha * l2sp_loss
-            print(f'L2SP loss: {l2sp_loss_with_alpha} before mult: {l2sp_loss}')
-            loss = loss_main + reg_loss + l2sp_loss
-            print(f'Bce loss: {loss_main}')
+            # print(f'L2SP loss: {l2sp_loss_with_alpha} before mult: {l2sp_loss}')
+            loss = loss_main + reg_loss_with_alpha + l2sp_loss_with_alpha
+            # print(f'Bce loss: {loss_main}')
 
             loss.backward()
             optimizer.step()
