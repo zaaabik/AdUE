@@ -10,7 +10,6 @@ model:
     path: torch.bfloat16
 adapter:
   path: ${oc.env:BASE_WEIGHT_PATH}/${model_name}_runs_seeds/${data.name}/${seed}/
-save_dir: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/results/${model_name}_results_ds_${seed}_${train_on_dataset}_gird_${grid.name}
 seed: 0
 classifier_name: classifier
 pooling:
