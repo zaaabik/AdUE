@@ -34,6 +34,7 @@ def train(cfg):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     state['device'] = device
     state['cfg']['grid'] = cfg.grid
+    state['cfg']['save_dir'] = cfg.save_dir
 
     num_classes = state['test_logits'].size(1)
     scale_factor = 1 - (1 / num_classes)
@@ -43,10 +44,11 @@ def train(cfg):
     state['test_max_probs'] = state['test_max_probs'] / scale_factor
 
     best_run, all_runs = search_hyperparameters(**state)
-    with open(f"{cfg.save_dir}_best_run.pickle", 'wb') as f:
+    f"dataset_name_smooth_classifier_one_cycle_lr_l2sp_probe.pkl"
+    with open(os.path.join(cfg.save_dir, cfg.data.name, 'best_run.pickle'), 'wb') as f:
         pickle.dump(best_run, f)
 
-    with open(f"{cfg.save_dir}_all_runs.pickle", 'wb') as f:
+    with open(os.path.join(cfg.save_dir, cfg.data.name, 'all_runs.pickle'), 'wb') as f:
         pickle.dump(all_runs, f)
 
 
