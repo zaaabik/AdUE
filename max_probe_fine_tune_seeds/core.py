@@ -289,6 +289,7 @@ def search_hyperparameters(
                                 }
                                 if val_auc > best_val_auc:
                                     best_state = result_dict
+                                    best_val_auc = val_auc
 
                                 all_states.append(result_dict)
                                 trial += 1
