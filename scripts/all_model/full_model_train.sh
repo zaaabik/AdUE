@@ -1,14 +1,13 @@
 #!/bin/bash
-
-#CUDA_VISIBLE_DEVICES=0 python src/train.py -m seed=1,2,3,4 experiment=electra/lora/cola.yaml,llama7b/lora/cola.yaml,qwen2.5/lora/cola.yaml &
-#CUDA_VISIBLE_DEVICES=1 python src/train.py -m seed=1,2,3,4 experiment=electra/lora/newsgroups.yaml,llama7b/lora/newsgroups.yaml,qwen2.5/lora/newsgroups.yaml &
-#CUDA_VISIBLE_DEVICES=2 python src/train.py -m seed=1,2,3,4 experiment=electra/lora/sst2.yaml,llama7b/lora/sst2.yaml,qwen2.5/lora/sst2.yaml &
-#CUDA_VISIBLE_DEVICES=3 python src/train.py -m seed=1,2,3,4 experiment=electra/lora/sst5.yaml,llama7b/lora/sst5.yaml,qwen2.5/lora/sst5.yaml &
-#CUDA_VISIBLE_DEVICES=4 python src/train.py -m seed=1,2,3,4 experiment=electra/lora/toxigen.yaml,llama7b/lora/toxigen.yaml,qwen2.5/lora/toxigen.yaml &
+CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=roberta/full/sst5.yaml,roberta/full/cola.yaml,roberta/full/newsgroups.yaml,roberta/full/sst2.yaml,roberta/full/toxigen.yaml seed=0,1,2,3,4 ++trainer.max_epochs=15
+CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=electra/full/sst5.yaml,electra/full/cola.yaml,electra/full/newsgroups.yaml,electra/full/sst2.yaml,electra/full/toxigen.yaml seed=0,1,2,3,4 ++trainer.max_epochs=15
 
 
-CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=roberta/lora/sst5.yaml,roberta/lora/cola.yaml,roberta/lora/newsgroups.yaml,roberta/lora/sst2.yaml,roberta/lora/toxigen.yaml seed=0,1,2,3,4 &
-CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=electra/lora/sst5.yaml,electra/lora/cola.yaml,electra/lora/newsgroups.yaml,electra/lora/sst2.yaml,electra/lora/toxigen.yaml seed=0,1,2,3,4 &
-
-
-CUDA_VISIBLE_DEVICES=0 python src/train.py experiment=electra/full/sst5.yaml seed=0 ++trainer.max_epochs=3
+#CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=roberta/full/sst5.yaml,roberta/full/cola.yaml,roberta/full/newsgroups.yaml,roberta/full/sst2.yaml,roberta/full/toxigen.yaml seed=0 ++trainer.limit_train_batches=32 ++trainer.limit_val_batches=32 ++trainer.max_epochs=2
+#CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=electra/full/sst5.yaml,electra/full/cola.yaml,electra/full/newsgroups.yaml,electra/full/sst2.yaml,electra/full/toxigen.yaml seed=0 ++trainer.limit_train_batches=32 ++trainer.limit_val_batches=32 ++trainer.max_epochs=2
+#
+#
+#
+#
+#CUDA_VISIBLE_DEVICES=0 python src/train.py experiment=electra/full/sst5.yaml seed=0 ++trainer.max_epochs=3
+#CUDA_VISIBLE_DEVICES=0 python src/train.py experiment=roberta/full/sst5.yaml seed=0 ++trainer.max_epochs=3
