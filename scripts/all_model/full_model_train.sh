@@ -9,3 +9,6 @@
 
 CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=roberta/lora/sst5.yaml,roberta/lora/cola.yaml,roberta/lora/newsgroups.yaml,roberta/lora/sst2.yaml,roberta/lora/toxigen.yaml seed=0,1,2,3,4 &
 CUDA_VISIBLE_DEVICES=0 python src/train.py -m experiment=electra/lora/sst5.yaml,electra/lora/cola.yaml,electra/lora/newsgroups.yaml,electra/lora/sst2.yaml,electra/lora/toxigen.yaml seed=0,1,2,3,4 &
+
+
+CUDA_VISIBLE_DEVICES=0 python src/train.py experiment=electra/full/sst5.yaml seed=0 ++trainer.max_epochs=3

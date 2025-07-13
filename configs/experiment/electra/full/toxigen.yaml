@@ -7,7 +7,6 @@ defaults:
   - override /data: toxigen
   - override /model: electra/base.yaml
   - override /model_eval: electra/base.yaml
-  - override /adapter: lora.yaml
   - override /scheduler: linear_warmup.yaml
 
 data:
