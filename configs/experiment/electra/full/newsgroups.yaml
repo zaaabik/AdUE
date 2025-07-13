@@ -5,9 +5,10 @@
 
 defaults:
   - override /data: newsgroups
-  - override /model: electra/base.yaml
-  - override /model_eval: electra/base.yaml
+  - override /model: electra/full_model.yaml
+  - override /model_eval: electra/full_model.yaml
   - override /scheduler: linear_warmup.yaml
+
 data:
   batch_size: 8
 

@@ -5,8 +5,8 @@
 
 defaults:
   - override /data: sst2
-  - override /model: electra/base.yaml
-  - override /model_eval: electra/base.yaml
+  - override /model: electra/full_model.yaml
+  - override /model_eval: electra/full_model.yaml
   - override /scheduler: linear_warmup.yaml
 
 data:
