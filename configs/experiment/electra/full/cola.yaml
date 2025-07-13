@@ -1,0 +1,48 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+
+defaults:
+  - override /data: cola
+  - override /model: electra/full_model.yaml
+  - override /model_eval: electra/full_model.yaml
+  - override /scheduler: linear_warmup.yaml
+
+data:
+  batch_size: 8
+
+logger:
+  wandb:
+    project: uncertainty-estimation-sr-full-ft-cola
+
+scheduler:
+  base_lr: ${model.optimizer.lr}
+  final_lr: 0
+  warmup_epochs: 5
+
+model:
+  optimizer:
+    lr: 5e-4
+    weight_decay: 1e-1
+  model:
+    model:
+      torch_dtype:
+        path: ${dtype}
+
+model_eval:
+  model:
+    model:
+      torch_dtype:
+        path: ${dtype}
+
+dtype: torch.bfloat16
+
+optimize_metric_name: val/acc
+
+trainer:
+  max_epochs: 30
+  precision: bf16-mixed
+  accumulate_grad_batches: 8
+
+base_architecture: google/electra-base-discriminator
