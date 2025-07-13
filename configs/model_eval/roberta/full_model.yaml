@@ -1,0 +1,23 @@
+_target_: src.model.llm_module.LLMLitModule
+_recursive_: false
+model:
+  _target_: src.utils.instantiators.PreTrainedModelInstantiate
+  pretrained_path: ${base_architecture}
+  output_attentions: false
+  output_hidden_states: false
+  torch_dtype:
+    _target_: hydra.utils.get_object
+    path: torch.bfloat16
+  num_labels: ${data.num_labels}
+optimize_metric_name: ${optimize_metric_name}
+optimize_metric_mode: ${optimize_metric_mode}
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 5e-5
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  mode: ${optimize_metric_mode}
+  factor: 0.1
+  patience: 10
