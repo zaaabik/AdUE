@@ -151,8 +151,8 @@ class PeftPreTrainedModelInstantiate(BaseModelInstantiate):
 
 
 class PreTrainedModelInstantiate(BaseModelInstantiate):
-    def __init__(self, model: DictConfig, pretrained_path: str):
-        self.model = AutoModelForSequenceClassification.from_pretrained(pretrained_path)
+    def __init__(self, model: DictConfig, pretrained_path: str, **kwargs):
+        self.model = AutoModelForSequenceClassification.from_pretrained(pretrained_path, **kwargs)
         # self.model: MistralForSequenceClassification | LlamaForSequenceClassification = instantiate(model)
 
         self.pretrained_path = pretrained_path
