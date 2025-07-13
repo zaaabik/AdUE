@@ -23,7 +23,7 @@ scheduler:
 
 model:
   optimizer:
-    lr: 5e-4
+    lr: 1e-5
     weight_decay: 1e-1
   model:
     model:
