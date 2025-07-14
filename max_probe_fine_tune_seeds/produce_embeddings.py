@@ -378,14 +378,17 @@ def train(cfg):
         )
         adapter_name = model.peft_config['default'].__class__.__name__
         model = model.eval().merge_and_unload().to(device)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model.config._name_or_path)
     except:
         model = transformers.AutoModelForSequenceClassification.from_pretrained(
             adapter_path,
             **hydra.utils.instantiate(cfg.model)
         )
         adapter_name = 'full'
+        model_name = transformers.AutoConfig.from_pretrained(adapter_path)._name_or_path
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model.config._name_or_path)
+
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
