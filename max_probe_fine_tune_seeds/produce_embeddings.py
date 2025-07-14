@@ -370,13 +370,20 @@ def train(cfg):
     os.makedirs(cfg.save_dir, exist_ok=True)
 
     adapter_path = cfg.adapter.path
-    model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
-        adapter_path,
-        **hydra.utils.instantiate(cfg.model)
-    )
 
-    adapter_name = model.peft_config['default'].__class__.__name__
-    model = model.eval().merge_and_unload().to(device)
+    try:
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
+            adapter_path,
+            **hydra.utils.instantiate(cfg.model)
+        )
+        adapter_name = model.peft_config['default'].__class__.__name__
+        model = model.eval().merge_and_unload().to(device)
+    except:
+        model = transformers.AutoModelForSequenceClassification.from_pretrained(
+            adapter_path,
+            **hydra.utils.instantiate(cfg.model)
+        )
+        adapter_name = 'full'
 
     tokenizer = transformers.AutoTokenizer.from_pretrained(model.config._name_or_path)
     if tokenizer.pad_token_id is None:
