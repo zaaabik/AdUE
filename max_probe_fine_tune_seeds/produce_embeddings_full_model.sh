@@ -1,2 +1,2 @@
-CUDA_VISIBLE_DEVICES=0 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/produce_embeddings.py -m train_on_dataset=train experiment=roberta grid=full data.name=SST2,ToxigenDataset,NewsGroups,CoLa,SST5 seed=0,1,2,3,4 &
-CUDA_VISIBLE_DEVICES=0 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/produce_embeddings.py -m train_on_dataset=train experiment=electra grid=full data.name=SST2,SST5,CoLa,ToxigenDataset,NewsGroups data.llm_batch_size=8 seed=0,1,2,3,4 &
+CUDA_VISIBLE_DEVICES=0 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/produce_embeddings.py -m train_on_dataset=train experiment=roberta_full grid=debug data.name=SST2,ToxigenDataset,NewsGroups,CoLa,SST5 seed=0,1,2,3,4 &
+CUDA_VISIBLE_DEVICES=0 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/produce_embeddings.py -m train_on_dataset=train experiment=electra_full grid=debug data.name=SST2,SST5,CoLa,ToxigenDataset,NewsGroups data.llm_batch_size=8 seed=0,1,2,3,4 &
