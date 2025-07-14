@@ -1,0 +1,18 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=example
+model_name: electra
+model:
+  attn_implementation: eager
+  torch_dtype:
+    _target_: hydra.utils.get_object
+    path: torch.bfloat16
+adapter:
+  path: /workspace/data/full_weights/${model_name}_runs_seeds/${data.name}/${seed}/
+save_dir: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/full_model_results/${model_name}_results_ds_${seed}_${train_on_dataset}_gird_${grid.name}
+seed: 0
+classifier_name: classifier
+pooling:
+  _target_: src.utils.pooling.CLSTokenPooling
+  layer_number: -1
