@@ -389,10 +389,11 @@ def train(cfg):
         model_mapping = {
             'roberta': 'roberta-base',
             'electra': 'google/electra-base-discriminator',
-            'llama' : 'meta-llama/Llama-2-7b-hf',
-            'qwen' : 'qwen2.5/base.yaml'
+            'llama': 'meta-llama/Llama-2-7b-hf',
+            'qwen': 'qwen2.5/base.yaml'
         }
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
+        model = model.eval().to(device)
 
 
     if tokenizer.pad_token_id is None:
