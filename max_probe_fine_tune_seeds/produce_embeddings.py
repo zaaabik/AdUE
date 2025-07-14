@@ -385,8 +385,14 @@ def train(cfg):
             **hydra.utils.instantiate(cfg.model)
         )
         adapter_name = 'full'
-        model_name = transformers.AutoConfig.from_pretrained(adapter_path)._name_or_path
-        tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+
+        model_mapping = {
+            'roberta': 'roberta-base',
+            'electra': 'google/electra-base-discriminator',
+            'llama' : 'meta-llama/Llama-2-7b-hf',
+            'qwen' : 'qwen2.5/base.yaml'
+        }
+        tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
 
 
     if tokenizer.pad_token_id is None:
