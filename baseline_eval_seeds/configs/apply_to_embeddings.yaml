@@ -1,0 +1,24 @@
+defaults:
+  - _self_
+
+model_name: llama
+data:
+  name: CoLa
+  dataset:
+    _target_: src.dataset.sequence_classification.${data.name}
+seed: 0
+embedding_path: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/results/${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_${data.name}_state.pickle
+save_dir: ${oc.env:PROJECT_ROOT}/baseline_eval_seeds/results_on_embeddings/grid_${grid.name}/model_${model_name}_${train_on_dataset}/dataset_${data.name}/seed_${seed}/
+train_on_dataset: train
+extract_features:
+  layer_number: -1
+normalization: true
+rde_n_components:
+  - 256
+adapter:
+  path: ${oc.env:BASE_WEIGHT_PATH}/${model_name}_runs_seeds/${data.name}/${seed}/
+model:
+  torch_dtype:
+    _target_: hydra.utils.get_object
+    path: torch.bfloat16
+  num_labels: 0
