@@ -18,9 +18,7 @@ import random
 import numpy as np
 import peft
 import torch
-import transformers
 from sklearn.metrics import roc_auc_score
-from torch.utils.data import DataLoader
 
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
