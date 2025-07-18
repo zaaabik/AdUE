@@ -10,4 +10,4 @@
 
 OMP_NUM_THREADS=4 python baseline_eval_seeds/eval.py -m train_on_dataset=train normalization=true,false experiment=roberta seed=0,1,2,3,4 data.name=SST5
 
-OMP_NUM_THREADS=4 python baseline_eval_seeds/eval_on_embeddings.py train_on_dataset=train normalization=true experiment=roberta seed=0 data.name=SST5
+OMP_NUM_THREADS=4 python baseline_eval_seeds/eval_on_embeddings.py train_on_dataset=train normalization=true model_name=roberta seed=0 data.name=SST5

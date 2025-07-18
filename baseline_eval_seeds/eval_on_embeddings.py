@@ -43,6 +43,12 @@ def eval(cfg):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     os.makedirs(cfg.save_dir, exist_ok=True)
 
+    dataset = hydra.utils.instantiate(cfg.data.dataset)
+    dataset_name = dataset.name()
+    num_classes = dataset.num_classes()
+    num_classes = dataset.num_classes()
+    cfg.model.num_labels = num_classes
+
     adapter_path = cfg.adapter.path
     model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
         adapter_path,
