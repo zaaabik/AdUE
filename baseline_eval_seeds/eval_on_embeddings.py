@@ -46,7 +46,6 @@ def eval(cfg):
     dataset = hydra.utils.instantiate(cfg.data.dataset)
     dataset_name = dataset.name()
     num_classes = dataset.num_classes()
-    num_classes = dataset.num_classes()
     cfg.model.num_labels = num_classes
 
     adapter_path = cfg.adapter.path
@@ -56,7 +55,6 @@ def eval(cfg):
     )
 
     adapter_name = 'LoRA'
-    dataset_name = cfg.data.name
     model = model.eval().merge_and_unload().to(device)
 
     if model.config.pad_token_id is None:
