@@ -197,7 +197,7 @@ def get_embedding_head(cls_head, config):
         return torch.nn.Identity()
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="eval.yaml")
+@hydra.main(version_base="1.3", config_path="configs", config_name="apply_to_embeddings.yaml")
 def main(cfg: DictConfig):
     """Main entry point for inference.
 
