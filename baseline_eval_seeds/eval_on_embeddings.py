@@ -105,6 +105,7 @@ def eval(cfg):
         errors = test_targets != test_logits.argmax(dim=1)
 
         rde_roc_auc = {}
+        rde_predictions = {}
         for n_components in cfg.rde_n_components:
             _rde_dist = rde_distance(
                 train_features, test_features, n_components=n_components
@@ -113,6 +114,7 @@ def eval(cfg):
             rde_roc_auc[f'rde_n_components_{n_components}_roc_auc'] = roc_auc_score(
                 errors, _rde_dist
             )
+            rde_predictions[f'rde_n_components_{n_components}'] = _rde_dist
 
         probs = torch.softmax(test_logits, dim=-1)
         md_roc_auc = roc_auc_score(errors, md)
@@ -159,7 +161,8 @@ def eval(cfg):
                 'md': md,
                 'md_marginal': md_marginal,
                 'md_relative': md_relative,
-                'sr': 1 - probs.amax(dim=-1)
+                'sr': 1 - probs.amax(dim=-1),
+                **rde_predictions
             }
         }
 
