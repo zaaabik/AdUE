@@ -1,6 +1,7 @@
 import hydra
 import pandas as pd
 from omegaconf import DictConfig
+import pickle
 
 # pylint: disable=wrong-import-position
 import lightning as L
@@ -19,7 +20,6 @@ import numpy as np
 import peft
 import torch
 from sklearn.metrics import roc_auc_score
-
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
@@ -83,8 +83,6 @@ def eval(cfg):
     train_features = train_features.double().to(device)
     train_targets = train_targets.to(device)
     test_features = test_features.double().to(device)
-
-
 
     with torch.no_grad():
         if cfg.normalization:
@@ -150,9 +148,32 @@ def eval(cfg):
         metric_df = pd.DataFrame([current_state])
 
         metric_df.to_csv(
-            os.path.join(cfg.save_dir, f"{adapter_name}_{dataset_name}_{cfg.seed}_{cfg.normalization}_baselines.csv"),
+            os.path.join(
+                cfg.save_dir,
+                f"{adapter_name}_{dataset_name}_seed_{cfg.seed}_normalization_{cfg.normalization}_baselines.csv")
+            ,
             index=False
         )
+
+        final_state = {
+            'metric_df': metric_df,
+            'prediction': {
+                'targets': test_targets,
+                'logits': test_logits,
+                'md': md,
+                'md_marginal': md_marginal,
+                'md_relative': md_relative,
+                'sr': 1 - probs.amax(dim=-1)
+            }
+        }
+
+        with open(
+                os.path.join(
+                    cfg.save_dir,
+                    f"{adapter_name}_{dataset_name}_seed_{cfg.seed}_normalization_{cfg.normalization}_baselines_state"
+                    f".pkl"
+                ), 'wb') as f:
+            pickle.dump(final_state, f)
 
 
 def extraxt_features(model, dataloader, pooling):
