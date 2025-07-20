@@ -7,11 +7,6 @@ import pickle
 import lightning as L
 import rootutils
 from torch.nn import functional as F
-from transformers.activations import GELUActivation
-from transformers.models.electra.modeling_electra import ElectraClassificationHead
-from transformers.models.roberta.modeling_roberta import RobertaClassificationHead
-from torch.nn.utils import spectral_norm as pt_spectral_norm
-from tqdm import tqdm
 
 import os
 import random
@@ -22,6 +17,8 @@ import torch
 from sklearn.metrics import roc_auc_score
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+from baseline_eval_seeds.eval import get_embedding_head
 
 seed = 42
 
@@ -62,7 +59,6 @@ def eval(cfg):
 
     original_head = model.__getattr__(cfg.classifier_name)
 
-    pooling = hydra.utils.instantiate(cfg.pooling)
     embedding_head = get_embedding_head(original_head, model.config)
     device = model.device
     embedding_head.to(device=device, dtype=torch.float32)
@@ -174,50 +170,6 @@ def eval(cfg):
                     f".pkl"
                 ), 'wb') as f:
             pickle.dump(final_state, f)
-
-
-def extraxt_features(model, dataloader, pooling):
-    logits = []
-    targets = []
-    features = []
-    device = 'cuda'
-
-    model.eval().cuda()
-    with torch.autocast(device_type='cuda:0', dtype=torch.bfloat16):
-        with torch.no_grad():
-            for batch in tqdm(dataloader, desc="Extracting features"):
-                batch = {k: v.to(device) for k, v in batch.items()}
-                out = model(**batch, output_hidden_states=True)
-                cls_token = pooling(
-                    out.hidden_states, input_ids=batch['input_ids'], model=model
-                )
-                logits.append(out.logits.cpu())
-                targets.append(batch['labels'].cpu())
-                features.append(cls_token.cpu())
-
-    targets = torch.concat(targets, dim=0).float()
-    logits = torch.concat(logits, dim=0).float()
-    features = torch.concat(features, dim=0).float()
-    return features, logits, targets
-
-
-def get_embedding_head(cls_head, config):
-    if isinstance(cls_head, RobertaClassificationHead):
-        cls = RobertaClassificationHead(config)
-        cls.load_state_dict(cls_head.state_dict())
-        return torch.nn.Sequential(
-            pt_spectral_norm(cls.dense, n_power_iterations=64),
-            torch.nn.Tanh()
-        )
-    elif isinstance(cls_head, ElectraClassificationHead):
-        cls = ElectraClassificationHead(config)
-        cls.load_state_dict(cls_head.state_dict())
-        return torch.nn.Sequential(
-            pt_spectral_norm(cls.dense, n_power_iterations=64),
-            GELUActivation()
-        )
-    elif isinstance(cls_head, torch.nn.Linear):
-        return torch.nn.Identity()
 
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="apply_to_embeddings.yaml")
