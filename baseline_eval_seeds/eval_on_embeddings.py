@@ -80,7 +80,7 @@ def eval(cfg):
     train_targets = train_targets.to(device)
     test_features = test_features.double().to(device)
 
-    with torch.no_grad():
+    with (torch.no_grad()):
         if cfg.normalization:
             train_features = F.normalize(train_features, p=2, dim=1)
             test_features = F.normalize(test_features, p=2, dim=1)
@@ -165,13 +165,13 @@ def eval(cfg):
                 **rde_predictions
             }
         }
-
-        with open(
-                os.path.join(
-                    cfg.save_dir,
-                    f"{adapter_name}_{dataset_name}_seed_{cfg.seed}_normalization_{cfg.normalization}_baselines_state"
-                    f".pkl"
-                ), 'wb') as f:
+        final_state_save_path = os.path.join(
+            cfg.save_dir,
+            f"{adapter_name}_{dataset_name}_seed_{cfg.seed}_normalization_{cfg.normalization}_baselines_state"
+            f".pkl"
+        )
+        print(f'Save prediction: {final_state_save_path}')
+        with open(final_state_save_path, 'wb') as f:
             pickle.dump(final_state, f)
 
 
