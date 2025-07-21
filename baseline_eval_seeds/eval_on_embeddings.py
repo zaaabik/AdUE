@@ -84,18 +84,21 @@ def eval(cfg):
         if cfg.normalization:
             train_features = F.normalize(train_features, p=2, dim=1)
             test_features = F.normalize(test_features, p=2, dim=1)
+        print('md_relative')
         md_relative = distances.mahalanobis_distance_relative(
             train_features,
             train_targets,
             test_features,
         ).cpu()
 
+        print('md')
         md = distances.mahalanobis_distance(
             train_features,
             train_targets,
             test_features,
         ).cpu()
 
+        print('md marginal')
         md_marginal = distances.mahalanobis_distance_marginal(
             train_features,
             train_targets,
@@ -106,6 +109,7 @@ def eval(cfg):
 
         rde_roc_auc = {}
         rde_predictions = {}
+        print('RDE 256')
         for n_components in cfg.rde_n_components:
             _rde_dist = rde_distance(
                 train_features, test_features, n_components=n_components
