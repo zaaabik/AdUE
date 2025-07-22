@@ -45,7 +45,7 @@ class EntropyClassifierHead(nn.Module):
             cls_token = cls_token[:, None, :]
         x = self.head(cls_token)
         p = torch.softmax(x, dim=1)
-        entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
+        entropy = (-p * torch.log2(p + 1e-6)).sum(dim=-1) / self.max_entropy
         return entropy
 
 
