@@ -1,4 +1,4 @@
-learning_rates: [0.]
+learning_rates: [1e-8]
 epoch_candidates: [30]
 lambda_candidates: [100.0]
 reg_alpha_candidates:  [0.0]
