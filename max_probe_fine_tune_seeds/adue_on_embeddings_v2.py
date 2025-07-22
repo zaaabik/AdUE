@@ -14,7 +14,7 @@ import rootutils
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
-from max_probe_fine_tune_seeds.core import search_hyperparameters
+from max_probe_fine_tune_seeds.core import search_hyperparameters_v2
 
 random.seed(42)
 np.random.seed(42)
@@ -42,7 +42,7 @@ def train(cfg):
     del state['test_max_probs']
     del state['val_max_probs']
 
-    best_run, all_runs = search_hyperparameters(**state)
+    best_run, all_runs = search_hyperparameters_v2(**state)
 
     current_output_dir = os.path.join(cfg.save_dir)
     print(f'Saving results to: {current_output_dir}')
