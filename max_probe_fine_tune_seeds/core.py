@@ -383,7 +383,7 @@ def search_hyperparameters_v2(
     trial = 0
     grid = cfg.grid
     num_classes = test_logits.size(1)
-    head_type = cfg.grid.get('head_type', 'entropy')
+    head_type = cfg.grid.get('head_type', 'sr')
 
     total_experiments = (
         len(grid.reg_alpha_candidates) *
