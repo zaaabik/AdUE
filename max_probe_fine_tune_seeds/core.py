@@ -358,7 +358,7 @@ def get_data_for_training(logits, original_targets, head_type):
     else:
         raise ValueError(f'head_type is {head_type}')
 
-    return errors, base_prediction
+    return errors.float(), base_prediction
 
 
 def calculate_base_metrics(logits, errors):
