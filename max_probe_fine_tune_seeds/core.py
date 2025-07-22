@@ -395,7 +395,6 @@ def search_hyperparameters_v2(
     best_state = None
     all_states = []
     train_errors, train_base_pred = get_data_for_training(train_logits, train_original_target, head_type)
-    print(train_base_pred)
     test_errors, test_base_pred = get_data_for_training(test_logits, test_original_targets, head_type)
     val_errors, val_base_pred = get_data_for_training(val_logits, val_original_targets, head_type)
     base_eu_metrics = calculate_base_metrics(test_logits, test_errors)
