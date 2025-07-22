@@ -46,7 +46,7 @@ class EntropyClassifierHead(nn.Module):
         x = self.head(cls_token)
         p = torch.softmax(x, dim=1)
         entropy = (-p * torch.log2(p + 1e-6)).sum(dim=-1) / self.max_entropy
-        return entropy
+        return torch.clamp(entropy, min=1e-8, max=1-1e-8)
 
 
 class SmoothMaxClassifierHead(nn.Module):
