@@ -453,7 +453,7 @@ def search_hyperparameters_v2(
                                     val_errors, val_base_pred = get_data_for_training(
                                         val_logits, val_original_targets, head_type
                                     )
-                                    base_eu_metrics = calculate_base_metrics(test_logits, test_errors)
+                                    base_eu_metrics = calculate_base_metrics(val_logits, val_errors)
 
                                     if head_type == 'sr':
                                         candidate_head = SmoothMaxClassifierHead(
