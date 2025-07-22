@@ -1,5 +1,5 @@
-learning_rates: [1e-8,0.0]
-epoch_candidates: [30]
+learning_rates: [0.0, 1e-8]
+epoch_candidates: [5]
 lambda_candidates: [100.0]
 reg_alpha_candidates:  [0.0]
 reg_l2sp_candidates: [0.0]
