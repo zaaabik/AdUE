@@ -395,6 +395,7 @@ def search_hyperparameters_v2(
     best_state = None
     all_states = []
     train_errors, train_base_pred = get_data_for_training(train_logits, train_original_target, head_type)
+    print(train_base_pred)
     test_errors, test_base_pred = get_data_for_training(test_logits, test_original_targets, head_type)
     val_errors, val_base_pred = get_data_for_training(val_logits, val_original_targets, head_type)
     base_eu_metrics = calculate_base_metrics(test_logits, test_errors)
@@ -404,7 +405,7 @@ def search_hyperparameters_v2(
     test_acc = (
             test_logits.argmax(dim=1) == test_original_targets
     ).float().mean().item()
-    test_max_probs = 1 - torch.softmax(test_logits, dim=-1)
+    test_max_probs = 1 - torch.softmax(test_logits, dim=-1).amax(dim=-1)
     test_max_prob_auc = roc_auc_score(test_errors, test_max_probs)
 
     test_max_prob_auc_v2 = roc_auc_score(
@@ -414,7 +415,7 @@ def search_hyperparameters_v2(
     assert np.allclose(test_max_prob_auc, test_max_prob_auc_v2)
 
     val_acc = (val_logits.argmax(dim=-1) == val_original_targets).float().mean().item()
-    val_max_probs = 1 - torch.softmax(val_logits, dim=-1)
+    val_max_probs = 1 - torch.softmax(val_logits, dim=-1).amax(dim=-1)
 
     max_prob_val = roc_auc_score(val_errors, val_max_probs)
     max_prob_val_v2 = roc_auc_score(
