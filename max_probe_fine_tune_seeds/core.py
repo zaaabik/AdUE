@@ -14,6 +14,41 @@ batch_size = 256
 generator = torch.Generator().manual_seed(42)
 
 
+class EntropyClassifierHead(nn.Module):
+    def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls'):
+        super().__init__()
+        if isinstance(original_lm_head, torch.nn.Linear):
+            self.head = torch.nn.Linear(
+                original_lm_head.in_features, original_lm_head.out_features,
+                bias=original_lm_head.bias
+            )
+            self.need_to_add_dim = False
+        elif isinstance(original_lm_head, (RobertaClassificationHead, ElectraClassificationHead)):
+            self.head = type(original_lm_head)(config)
+            self.need_to_add_dim = True
+
+        if load_weights == 'cls_head':
+            self.head.load_state_dict(original_lm_head.state_dict())
+        elif load_weights == 'cls_random':
+            pass
+        elif load_weights == 'linear_random':
+            self.need_to_add_dim = False
+            self.head = torch.nn.Linear(
+                config.hidden_size, config.num_labels
+            )
+        else:
+            raise ValueError(f'Load weight unknown {load_weights}')
+        self.max_entropy = torch.nn.Parameter(torch.log2(torch.tensor(num_classes)), requires_grad=False)
+
+    def forward(self, cls_token):
+        if self.need_to_add_dim:
+            cls_token = cls_token[:, None, :]
+        x = self.head(cls_token)
+        p = torch.softmax(x, dim=1)
+        entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
+        return entropy
+
+
 class SmoothMaxClassifierHead(nn.Module):
     def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls'):
         super().__init__()
@@ -163,7 +198,7 @@ def search_hyperparameters(
         model_cfg, original_head, train_features, train_labels, train_max_probs,
         val_features, val_labels, val_max_probs, val_logits, val_original_targets,
         test_features, test_labels, test_max_probs, test_logits, test_original_targets,
-        device, smooth_batch_size, adapter_name, dataset_name, cfg
+        device, smooth_batch_size, adapter_name, dataset_name, cfg, head_type='sr'
 ):
     best_val_auc = -1
     trial = 0
@@ -220,11 +255,21 @@ def search_hyperparameters(
                                     'base_sr_response_auc': f"{test_max_prob_auc_v2:.4f}",
                                     'best_auc': f"{best_val_auc:.4f}"
                                 })
-                                candidate_head = SmoothMaxClassifierHead(
-                                    original_head, config=model_cfg,
-                                    num_classes=num_classes, lam=lam,
-                                    load_weights=load_weights,
-                                ).to(device=device, dtype=torch.float32)
+                                if head_type == 'sr':
+                                    candidate_head = SmoothMaxClassifierHead(
+                                        original_head, config=model_cfg,
+                                        num_classes=num_classes, lam=lam,
+                                        load_weights=load_weights,
+                                    ).to(device=device, dtype=torch.float32)
+                                elif head_type == 'entropy':
+                                    candidate_head = EntropyClassifierHead(
+                                        original_head, config=model_cfg,
+                                        num_classes=num_classes, lam=lam,
+                                        load_weights=load_weights,
+                                    ).to(device=device, dtype=torch.float32)
+                                else:
+                                    raise ValueError(f'Wrong head type {head_type}')
+
                                 candidate_head = train_smooth_head(
                                     candidate_head,
                                     train_features,

@@ -1,0 +1,17 @@
+defaults:
+  - _self_
+  - grid: base.yaml
+  - experiment: null
+
+model_name: llama
+data:
+  name: CoLa
+  dataset:
+    _target_: src.dataset.sequence_classification.${data.name}
+  smooth_head_batch_size: 128
+seed: 0
+embedding_path: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/results/${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_${data.name}_state.pickle
+save_dir: ${oc.env:PROJECT_ROOT}/max_probe_fine_tune_seeds/results_on_embeddings_entropy/grid_${grid.name}/model_${model_name}_${train_on_dataset}/dataset_${data.name}/seed_${seed}/
+train_on_dataset: train
+extract_features:
+  layer_number: -1
