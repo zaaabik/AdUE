@@ -434,6 +434,8 @@ def search_hyperparameters_v2(
                             for ep in grid.epoch_candidates:
                                 for load_weights in grid.load_weights:
                                     pbar_main.set_postfix({
+                                        **base_eu_metrics,
+                                        'best_auc': f"{best_val_auc:.4f}",
                                         'trial': trial + 1,
                                         'reg_α': reg_alpha,
                                         'λ': lam,
@@ -441,8 +443,6 @@ def search_hyperparameters_v2(
                                         'l2sp_α': l2sp_alpha,
                                         'epochs': ep,
                                         'load_weights': load_weights,
-                                        **base_eu_metrics,
-                                        'best_auc': f"{best_val_auc:.4f}"
                                     })
                                     train_errors, train_base_pred = get_data_for_training(
                                         train_logits, train_original_target, head_type
