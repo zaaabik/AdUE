@@ -1,0 +1,9 @@
+learning_rates: [1e-4, 1e-5, 1e-3]
+epoch_candidates: [5, 10]
+lambda_candidates: [100.0]
+reg_alpha_candidates: [0.0, 0.1, 1.0]
+reg_l2sp_candidates: [0.01, 0.1, 1.0]
+extract_features_layer_number: [-1]
+load_weights: ['cls_head']
+head_type: ['entropy', 'sr']
+name: full_with_entropy

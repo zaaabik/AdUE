@@ -30,21 +30,19 @@ def train(cfg):
     os.makedirs(cfg.save_dir, exist_ok=True)
 
     state = pd.read_pickle(cfg.embedding_path)
-    del state['train_logits']
-    del state['train_original_target']
     device = "cuda" if torch.cuda.is_available() else "cpu"
     state['device'] = device
     state['cfg']['grid'] = cfg.grid
     state['cfg']['save_dir'] = cfg.save_dir
 
-    num_classes = state['test_logits'].size(1)
-    scale_factor = 1 - (1 / num_classes)
+    del state['train_labels']
+    del state['test_labels']
+    del state['val_labels']
+    del state['train_max_probs']
+    del state['test_max_probs']
+    del state['val_max_probs']
 
-    state['train_max_probs'] = state['train_max_probs'] / scale_factor
-    state['val_max_probs'] = state['val_max_probs'] / scale_factor
-    state['test_max_probs'] = state['test_max_probs'] / scale_factor
-
-    best_run, all_runs = search_hyperparameters(**state, head_type='entropy')
+    best_run, all_runs = search_hyperparameters(**state)
 
     current_output_dir = os.path.join(cfg.save_dir)
     print(f'Saving results to: {current_output_dir}')
@@ -56,7 +54,7 @@ def train(cfg):
         pickle.dump(all_runs, f)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="apply_to_embeddings_entropy.yaml")
+@hydra.main(version_base="1.3", config_path="configs", config_name="apply_to_embeddings.yaml")
 def main(cfg: DictConfig):
     """Main entry point for inference.
 
@@ -70,4 +68,3 @@ def main(cfg: DictConfig):
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
     main()
-
