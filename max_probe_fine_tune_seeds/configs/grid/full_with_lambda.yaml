@@ -1,8 +1,0 @@
-learning_rates: [1e-4, 1e-5, 1e-3]
-epoch_candidates: [10, 20]
-lambda_candidates: [10., 100.0]
-reg_alpha_candidates: [0.0, 1e1, 1e2]
-reg_l2sp_candidates: [0.0, 1e1, 1e2]
-extract_features_layer_number: [-1]
-load_weights: ['cls_head']
-name: full_with_lambda

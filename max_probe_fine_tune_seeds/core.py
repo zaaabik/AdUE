@@ -34,7 +34,7 @@ class EntropyClassifierHead(nn.Module):
         elif load_weights == 'linear_random':
             self.need_to_add_dim = False
             self.head = torch.nn.Linear(
-                config.hidden_size, config.num_labels
+                config.hidden_size, 1
             )
         else:
             raise ValueError(f'Load weight unknown {load_weights}')
@@ -44,9 +44,12 @@ class EntropyClassifierHead(nn.Module):
         if self.need_to_add_dim:
             cls_token = cls_token[:, None, :]
         x = self.head(cls_token)
-        p = torch.softmax(x, dim=1)
-        entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
-        return torch.clamp(entropy, min=1e-9, max=1-1e-9)
+        if self.load_weights in ('cls_head', 'cls_random'):
+            p = torch.softmax(x, dim=1)
+            entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
+            return torch.clamp(entropy, min=1e-9, max=1-1e-9)
+        elif self.load_weights == 'linear_random':
+            return x
 
 
 class SmoothMaxClassifierHead(nn.Module):
@@ -69,7 +72,7 @@ class SmoothMaxClassifierHead(nn.Module):
         elif load_weights == 'linear_random':
             self.need_to_add_dim = False
             self.head = torch.nn.Linear(
-                config.hidden_size, config.num_labels
+                config.hidden_size, 1
             )
         else:
             raise ValueError(f'Load weight unknown {load_weights}')
@@ -77,16 +80,20 @@ class SmoothMaxClassifierHead(nn.Module):
         self.scaler = torch.nn.Parameter(torch.tensor(
             1 - 1 / num_classes
         ), requires_grad=False)
+        self.load_weights = load_weights
 
     def forward(self, cls_token):
         if self.need_to_add_dim:
             cls_token = cls_token[:, None, :]
         x = self.head(cls_token)
-        p = torch.softmax(x, dim=1)
-        smooth_max = (1 / self.lam) * torch.logsumexp(self.lam * p, dim=1)
-        f_smooth = 1 - smooth_max
-        eps = 1e-8
-        return torch.clamp(f_smooth / self.scaler, min=eps, max=1 - eps)
+        if self.load_weights in ('cls_head', 'cls_random'):
+            p = torch.softmax(x, dim=1)
+            smooth_max = (1 / self.lam) * torch.logsumexp(self.lam * p, dim=1)
+            f_smooth = 1 - smooth_max
+            eps = 1e-8
+            return torch.clamp(f_smooth / self.scaler, min=eps, max=1 - eps)
+        elif self.load_weights == 'linear_random':
+            return x
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
@@ -383,7 +390,7 @@ def search_hyperparameters_v2(
     trial = 0
     grid = cfg.grid
     num_classes = test_logits.size(1)
-    head_types = cfg.grid.get('head_type', ['sr'])
+    head_types = cfg.grid.head_type
 
 
     total_experiments = (
