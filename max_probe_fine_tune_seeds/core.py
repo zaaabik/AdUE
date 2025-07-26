@@ -49,7 +49,7 @@ class EntropyClassifierHead(nn.Module):
             entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
             return torch.clamp(entropy, min=1e-9, max=1-1e-9)
         elif self.load_weights == 'linear_random':
-            return torch.sigmoid(x)
+            return torch.sigmoid(x[:,0])
 
 
 class SmoothMaxClassifierHead(nn.Module):
@@ -93,7 +93,7 @@ class SmoothMaxClassifierHead(nn.Module):
             eps = 1e-8
             return torch.clamp(f_smooth / self.scaler, min=eps, max=1 - eps)
         elif self.load_weights == 'linear_random':
-            return torch.sigmoid(x)
+            return torch.sigmoid(x[:,0])
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
