@@ -39,6 +39,7 @@ class EntropyClassifierHead(nn.Module):
         else:
             raise ValueError(f'Load weight unknown {load_weights}')
         self.max_entropy = torch.nn.Parameter(torch.log2(torch.tensor(num_classes)), requires_grad=False)
+        self.load_weights = load_weights
 
     def forward(self, cls_token):
         if self.need_to_add_dim:
