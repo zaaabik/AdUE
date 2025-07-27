@@ -238,10 +238,11 @@ class AdueModel(L.LightningModule):
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
         current_metric = self.val_roc_auc.compute()  # get current val acc
+        prev_best_metric = self.best_metric.compute()
         self.best_metric(current_metric)  # update best so far val acc
         # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
         # otherwise metric would be reset by lightning after each epoch
-        if self.best_metric.compute() != self.val_roc_auc.compute():
+        if self.best_metric.compute() != prev_best_metric:
             self.log('val/error_roc_auc_best', self.val_roc_auc.compute(), prog_bar=True)
             self.log('train/error_roc_auc_best', self.train_roc_auc.compute(), prog_bar=True)
 
