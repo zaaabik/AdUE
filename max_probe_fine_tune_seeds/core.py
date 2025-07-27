@@ -118,31 +118,43 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
 class AdueModel(L.LightningModule):
     def __init__(self, head, lr, reg_alpha, l2sp_alpha):
         super().__init__()
+        self.save_hyperparameters(ignore=['head'])
         self.head = head
         self.criterion = nn.BCELoss()
 
         self.initial_params = {
-            name: p.detach().clone()
+            name: p.detach().clone().requires_grad_(False)
             for name, p in head.named_parameters()
             if p.requires_grad
         }
+
         self.train_roc_auc = torchmetrics.AUROC(task='binary')
         self.val_roc_auc = torchmetrics.AUROC(task='binary')
 
         self.train_loss = torchmetrics.MeanMetric()
 
+        self.train_bce_loss = torchmetrics.MeanMetric()
         self.train_reg_loss = torchmetrics.MeanMetric()
         self.train_reg_loss_with_alpha = torchmetrics.MeanMetric()
 
         self.train_l2sp_loss = torchmetrics.MeanMetric()
         self.train_l2sp_loss_with_alpha = torchmetrics.MeanMetric()
 
+        self.valid_loss = torchmetrics.MeanMetric()
+        self.valid_bce_loss = torchmetrics.MeanMetric()
+
+        self.valid_reg_loss = torchmetrics.MeanMetric()
+        self.valid_reg_loss_with_alpha = torchmetrics.MeanMetric()
+
+        self.valid_l2sp_loss = torchmetrics.MeanMetric()
+        self.valid_l2sp_loss_with_alpha = torchmetrics.MeanMetric()
+
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop.
         # it is independent of forward
-        feats, labs, base_probs = batch
-        outputs = self.smooth_head(feats)
-        loss_main = self.criterion(outputs.float(), labs)
+        feats, errors, base_probs = batch
+        outputs = self.head(feats)
+        loss_main = self.criterion(outputs, errors)
 
         reg_loss = torch.mean((outputs - base_probs) ** 2)
         l2sp_loss = 0
@@ -164,16 +176,80 @@ class AdueModel(L.LightningModule):
 
         self.train_l2sp_loss_with_alpha(l2sp_loss_with_alpha)
         self.log('train/l2sp_loss_with_alpha', self.train_l2sp_loss_with_alpha, on_step=True, on_epoch=True)
-        # print(f'L2SP loss: {l2sp_loss_with_alpha} before mult: {l2sp_loss}')
         loss = loss_main + reg_loss_with_alpha + l2sp_loss_with_alpha
+
+        self.train_bce_loss(loss_main)
+        self.log('train/bce_loss', self.train_bce_loss, on_step=True, on_epoch=True)
+
         self.train_loss(loss)
         self.log('train/loss', self.train_loss, on_step=True, on_epoch=True)
 
+        self.train_roc_auc(outputs, errors)
+        self.log('train/error_roc_auc', self.train_roc_auc, on_step=True, on_epoch=True, prog_bar=True)
+
+        cur_lr = self.trainer.optimizers[0].param_groups[0]['lr']
+        self.log("lr", cur_lr, prog_bar=True, on_step=True)
+
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        # training_step defines the train loop.
+        # it is independent of forward
+        feats, errors, base_probs = batch
+        outputs = self.head(feats)
+        loss_main = self.criterion(outputs, errors)
+
+        reg_loss = torch.mean((outputs - base_probs) ** 2)
+        l2sp_loss = 0
+        for name, param in self.head.named_parameters():
+            if param.requires_grad:
+                l2sp_loss += torch.sum((param - self.initial_params[name]) ** 2)
+
+        reg_loss_with_alpha = self.hparams.reg_alpha * reg_loss
+
+        self.valid_reg_loss(reg_loss)
+        self.log('valid/reg_loss', self.valid_reg_loss, on_step=True, on_epoch=True)
+        self.valid_reg_loss_with_alpha(reg_loss_with_alpha)
+        self.log('valid/reg_loss_with_alpha', self.valid_reg_loss_with_alpha, on_step=True, on_epoch=True)
+
+        l2sp_loss_with_alpha = self.hparams.l2sp_alpha * l2sp_loss
+
+        self.valid_l2sp_loss(l2sp_loss)
+        self.log('valid/l2sp_loss', self.valid_l2sp_loss, on_step=True, on_epoch=True)
+
+        self.valid_l2sp_loss_with_alpha(l2sp_loss_with_alpha)
+        self.log('valid/l2sp_loss_with_alpha', self.valid_l2sp_loss_with_alpha, on_step=True, on_epoch=True)
+        loss = loss_main + reg_loss_with_alpha + l2sp_loss_with_alpha
+        self.valid_bce_loss(loss_main)
+        self.log('valid/bce_loss', self.valid_bce_loss, on_step=True, on_epoch=True)
+
+        self.valid_loss(loss)
+        self.log('valid/loss', self.valid_loss, on_step=True, on_epoch=True)
+
+        self.val_roc_auc(outputs, errors)
+        self.log('val/error_roc_auc', self.val_roc_auc, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
-        return optimizer
+        print('Steps', self.trainer.estimated_stepping_batches)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=self.hparams.lr,
+            total_steps=self.trainer.estimated_stepping_batches,
+            anneal_strategy="cos",
+            pct_start=0.1,
+            div_factor=25.0,
+            final_div_factor=10000.0,
+        )
+        return {
+            'optimizer': optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "interval": "step",
+                "frequency": 1,
+            }
+        }
 
 
 def train_smooth_head_lightning(
@@ -194,6 +270,7 @@ def train_smooth_head_lightning(
         l2sp_alpha=0.01,
         warmup_steps_ratio=0.1,
         smooth_batch_size=batch_size,
+        log_params=dict()
 ):
     dataset = torch.utils.data.TensorDataset(train_features, train_errors, train_base_pred)
     train_loader = torch.utils.data.DataLoader(
@@ -222,13 +299,26 @@ def train_smooth_head_lightning(
 
     early_stopping_callback = L.pytorch.callbacks.EarlyStopping(
         monitor='val/error_roc_auc',
-        patience=3
+        patience=3, mode='max'
     )
-
+    mlflow_logger = L.pytorch.loggers.MLFlowLogger(
+        tracking_uri='sqlite:////Users/HawkA/Desktop/jupyter/adue/AdUE/notebooks/database.db'
+    )
+    mlflow_logger.log_hyperparams(log_params)
     trainer = L.Trainer(
+        accelerator='cpu',
+        num_sanity_val_steps=0,
         callbacks=[
-            early_stopping_callback
-        ]
+            early_stopping_callback,
+            L.pytorch.callbacks.LearningRateMonitor(logging_interval='step')
+            # lr_monitor
+        ],
+        logger=[
+            mlflow_logger,
+        ],
+        log_every_n_steps=1,
+        max_epochs=30,
+        enable_progress_bar=False
     )
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
@@ -437,6 +527,16 @@ def search_hyperparameters_lightning(
                                         reg_alpha=reg_alpha,
                                         l2sp_alpha=l2sp_alpha,
                                         smooth_batch_size=smooth_batch_size,
+                                        log_params={
+                                            'model': model_cfg._name_or_path,
+                                            'adapter': adapter_name,
+                                            'train_on_dataset': cfg.train_on_dataset,
+                                            'dataset': dataset_name,
+                                            'trial_number': trial,
+                                            'grid': cfg.grid.name,
+                                            'seed': cfg.seed,
+                                            'head_type': head_type,
+                                        }
                                     )
                                     val_auc, predicted_val_pred, predicted_val_target = evaluate_smooth_head(
                                         candidate_head, val_features, val_errors, device
