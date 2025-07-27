@@ -756,7 +756,7 @@ def get_data_for_training(logits, original_targets, head_type):
         num_classes = logits.shape[1]
         scale_factor = torch.log2(torch.tensor(num_classes))
         p = torch.softmax(logits, dim=-1)
-        base_prediction = 1 - ((-p * torch.log2(p + 1e-6)).sum(dim=1) / scale_factor)
+        base_prediction = ((-p * torch.log2(p + 1e-6)).sum(dim=1) / scale_factor)
     else:
         raise ValueError(f'head_type is {head_type}')
 
