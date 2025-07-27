@@ -5,4 +5,5 @@ reg_alpha_candidates:  [0.0]
 reg_l2sp_candidates: [0.0]
 extract_features_layer_number: [-1]
 load_weights: ['cls_head']
+head_type: ['sr']
 name: debug
