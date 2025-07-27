@@ -116,7 +116,7 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
 
 
 class AdueModel(L.LightningModule):
-    def __init__(self, head, lr, reg_alpha, l2sp_alpha):
+    def __init__(self, head, lr, reg_alpha, l2sp_alpha, mode='max'):
         super().__init__()
         self.save_hyperparameters()
         self.head = head
@@ -148,6 +148,11 @@ class AdueModel(L.LightningModule):
 
         self.valid_l2sp_loss = torchmetrics.MeanMetric()
         self.valid_l2sp_loss_with_alpha = torchmetrics.MeanMetric()
+
+        if mode == 'max':
+            self.best_metric = torchmetrics.MaxMetric()
+        elif mode == 'min':
+            self.best_metric = torchmetrics.MinMetric()
 
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop.
@@ -230,6 +235,16 @@ class AdueModel(L.LightningModule):
         self.log('val/error_roc_auc', self.val_roc_auc, on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
+    def on_validation_epoch_end(self) -> None:
+        "Lightning hook that is called when a validation epoch ends."
+        current_metric = self.val_roc_auc.compute()  # get current val acc
+        self.best_metric(current_metric)  # update best so far val acc
+        # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
+        # otherwise metric would be reset by lightning after each epoch
+        if self.best_metric.compute() != self.val_roc_auc.compute():
+            self.log('val/error_roc_auc_best', self.val_roc_auc.compute(), prog_bar=True)
+            self.log('train/error_roc_auc_best', self.train_roc_auc.compute(), prog_bar=True)
+
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
         print('Steps', self.trainer.estimated_stepping_batches)
@@ -303,6 +318,7 @@ def train_smooth_head_lightning(
     checkpoint_callback = L.pytorch.callbacks.ModelCheckpoint(monitor=monitor, mode=mode)
 
     mlflow_logger = L.pytorch.loggers.MLFlowLogger(
+        experiment_name=f'{log_params["model"]}_{log_params["dataset"]}',
         tracking_uri='sqlite:////Users/HawkA/Desktop/jupyter/adue/AdUE/notebooks/database.db'
     )
     mlflow_logger.log_hyperparams(log_params)
@@ -322,9 +338,10 @@ def train_smooth_head_lightning(
         enable_progress_bar=False
     )
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
-    trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     mlflow_logger.log_hyperparams({'best_path': trainer.checkpoint_callback.best_model_path})
     best_model = AdueModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+
+
     return best_model.head
 
 
