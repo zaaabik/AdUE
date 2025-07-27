@@ -50,9 +50,9 @@ class EntropyClassifierHead(nn.Module):
         if self.load_weights in ('cls_head', 'cls_random'):
             p = torch.softmax(x, dim=1)
             entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
-            return torch.clamp(entropy, min=1e-9, max=1-1e-9)
+            return torch.clamp(entropy, min=1e-9, max=1 - 1e-9)
         elif self.load_weights == 'linear_random':
-            return torch.sigmoid(x[:,0])
+            return torch.sigmoid(x[:, 0])
 
 
 class SmoothMaxClassifierHead(nn.Module):
@@ -96,7 +96,7 @@ class SmoothMaxClassifierHead(nn.Module):
             eps = 1e-8
             return torch.clamp(f_smooth / self.scaler, min=eps, max=1 - eps)
         elif self.load_weights == 'linear_random':
-            return torch.sigmoid(x[:,0])
+            return torch.sigmoid(x[:, 0])
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
@@ -118,7 +118,7 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
 class AdueModel(L.LightningModule):
     def __init__(self, head, lr, reg_alpha, l2sp_alpha):
         super().__init__()
-        self.save_hyperparameters(ignore=['head'])
+        self.save_hyperparameters()
         self.head = head
         self.criterion = nn.BCELoss()
 
@@ -263,12 +263,9 @@ def train_smooth_head_lightning(
         val_errors,
         val_base_pred,
 
-        device,
-        num_epochs=5,
         lr=3e-4,
         reg_alpha=0.1,
         l2sp_alpha=0.01,
-        warmup_steps_ratio=0.1,
         smooth_batch_size=batch_size,
         log_params=dict()
 ):
@@ -296,33 +293,39 @@ def train_smooth_head_lightning(
         smooth_head,
         lr=lr, reg_alpha=reg_alpha, l2sp_alpha=l2sp_alpha
     )
+    monitor = 'val/error_roc_auc'
+    mode = 'max'
 
     early_stopping_callback = L.pytorch.callbacks.EarlyStopping(
-        monitor='val/error_roc_auc',
-        patience=3, mode='max'
+        monitor=monitor,
+        patience=5, mode=mode
     )
+    checkpoint_callback = L.pytorch.callbacks.ModelCheckpoint(monitor=monitor, mode=mode)
+
     mlflow_logger = L.pytorch.loggers.MLFlowLogger(
         tracking_uri='sqlite:////Users/HawkA/Desktop/jupyter/adue/AdUE/notebooks/database.db'
     )
     mlflow_logger.log_hyperparams(log_params)
+
     trainer = L.Trainer(
         accelerator='cpu',
         num_sanity_val_steps=0,
         callbacks=[
             early_stopping_callback,
-            L.pytorch.callbacks.LearningRateMonitor(logging_interval='step')
-            # lr_monitor
+            checkpoint_callback
         ],
         logger=[
-            mlflow_logger,
+            mlflow_logger
         ],
-        log_every_n_steps=1,
-        max_epochs=30,
+        log_every_n_steps=25,
+        max_epochs=50,
         enable_progress_bar=False
     )
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
-
-    return smooth_head
+    trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    mlflow_logger.log_hyperparams({'best_path': trainer.checkpoint_callback.best_model_path})
+    best_model = AdueModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+    return best_model.head
 
 
 def train_smooth_head(
@@ -389,7 +392,7 @@ def train_smooth_head(
             except:
                 print(outputs.float())
                 print(outputs.max(), outputs.min())
-                1/0
+                1 / 0
 
             reg_loss = torch.mean((outputs - max_probs) ** 2)
 
@@ -412,6 +415,7 @@ def train_smooth_head(
             epoch_loss += loss.item() * feats.size(0)
 
     return smooth_head
+
 
 def search_hyperparameters_lightning(
         model_cfg, original_head,
@@ -471,131 +475,126 @@ def search_hyperparameters_lightning(
                 for lam in grid.lambda_candidates:
                     for lr in grid.learning_rates:
                         for l2sp_alpha in grid.reg_l2sp_candidates:
-                            for ep in grid.epoch_candidates:
-                                for load_weights in grid.load_weights:
-                                    pbar_main.set_postfix({
-                                        **base_eu_metrics,
-                                        'best_auc': f"{best_val_auc:.4f}",
-                                        'trial': trial + 1,
-                                        'reg_α': reg_alpha,
-                                        'λ': lam,
-                                        'lr': lr,
-                                        'l2sp_α': l2sp_alpha,
-                                        'epochs': ep,
-                                        'load_weights': load_weights,
-                                    })
-                                    train_errors, train_base_pred = get_data_for_training(
-                                        train_logits, train_original_target, head_type
-                                    )
-                                    test_errors, test_base_pred = get_data_for_training(
-                                        test_logits, test_original_targets, head_type
-                                    )
-                                    val_errors, val_base_pred = get_data_for_training(
-                                        val_logits, val_original_targets, head_type
-                                    )
-                                    base_eu_metrics = calculate_base_metrics(val_logits, val_errors)
+                            for load_weights in grid.load_weights:
+                                pbar_main.set_postfix({
+                                    **base_eu_metrics,
+                                    'best_auc': f"{best_val_auc:.4f}",
+                                    'trial': trial + 1,
+                                    'reg_α': reg_alpha,
+                                    'λ': lam,
+                                    'lr': lr,
+                                    'l2sp_α': l2sp_alpha,
+                                    'load_weights': load_weights,
+                                })
+                                train_errors, train_base_pred = get_data_for_training(
+                                    train_logits, train_original_target, head_type
+                                )
+                                test_errors, test_base_pred = get_data_for_training(
+                                    test_logits, test_original_targets, head_type
+                                )
+                                val_errors, val_base_pred = get_data_for_training(
+                                    val_logits, val_original_targets, head_type
+                                )
+                                base_eu_metrics = calculate_base_metrics(val_logits, val_errors)
 
-                                    if head_type == 'sr':
-                                        candidate_head = SmoothMaxClassifierHead(
-                                            original_head, config=model_cfg,
-                                            num_classes=num_classes, lam=lam,
-                                            load_weights=load_weights,
-                                        ).to(device=device, dtype=torch.float32)
-                                    elif head_type == 'entropy':
-                                        candidate_head = EntropyClassifierHead(
-                                            original_head, config=model_cfg,
-                                            num_classes=num_classes, lam=lam,
-                                            load_weights=load_weights,
-                                        ).to(device=device, dtype=torch.float32)
-                                    else:
-                                        raise ValueError(f'Wrong head type {head_type}')
+                                if head_type == 'sr':
+                                    candidate_head = SmoothMaxClassifierHead(
+                                        original_head, config=model_cfg,
+                                        num_classes=num_classes, lam=lam,
+                                        load_weights=load_weights,
+                                    ).to(device=device, dtype=torch.float32)
+                                elif head_type == 'entropy':
+                                    candidate_head = EntropyClassifierHead(
+                                        original_head, config=model_cfg,
+                                        num_classes=num_classes, lam=lam,
+                                        load_weights=load_weights,
+                                    ).to(device=device, dtype=torch.float32)
+                                else:
+                                    raise ValueError(f'Wrong head type {head_type}')
 
-                                    candidate_head = train_smooth_head_lightning(
-                                        candidate_head,
+                                candidate_head = train_smooth_head_lightning(
+                                    candidate_head,
 
-                                        train_features,
-                                        train_errors,
-                                        train_base_pred,
+                                    train_features,
+                                    train_errors,
+                                    train_base_pred,
 
-                                        val_features=val_features,
-                                        val_errors=val_errors,
-                                        val_base_pred=val_base_pred,
+                                    val_features=val_features,
+                                    val_errors=val_errors,
+                                    val_base_pred=val_base_pred,
 
-                                        device=device,
-                                        num_epochs=ep,
-                                        lr=lr,
-                                        reg_alpha=reg_alpha,
-                                        l2sp_alpha=l2sp_alpha,
-                                        smooth_batch_size=smooth_batch_size,
-                                        log_params={
-                                            'model': model_cfg._name_or_path,
-                                            'adapter': adapter_name,
-                                            'train_on_dataset': cfg.train_on_dataset,
-                                            'dataset': dataset_name,
-                                            'trial_number': trial,
-                                            'grid': cfg.grid.name,
-                                            'seed': cfg.seed,
-                                            'head_type': head_type,
-                                        }
-                                    )
-                                    val_auc, predicted_val_pred, predicted_val_target = evaluate_smooth_head(
-                                        candidate_head, val_features, val_errors, device
-                                    )
-
-                                    best_lr = lr
-                                    best_epochs = ep
-                                    best_lam = lam
-                                    best_reg_alpha = reg_alpha
-                                    best_l2sp_alpha = l2sp_alpha
-                                    test_auc, predicted_test_pred, predicted_test_target = evaluate_smooth_head(
-                                        candidate_head, test_features, test_errors, device
-                                    )
-
-                                    current_state = {
+                                    lr=lr,
+                                    reg_alpha=reg_alpha,
+                                    l2sp_alpha=l2sp_alpha,
+                                    smooth_batch_size=smooth_batch_size,
+                                    log_params={
                                         'model': model_cfg._name_or_path,
                                         'adapter': adapter_name,
-                                        'dataset': dataset_name,
                                         'train_on_dataset': cfg.train_on_dataset,
-                                        'seed': cfg.seed,
-                                        'grid': cfg.grid.name,
-                                        'lam': best_lam,
-                                        'reg_alpha': best_reg_alpha,
-                                        'l2sp_alpha': best_l2sp_alpha,
-                                        'load_weights': load_weights,
-                                        'lr': best_lr,
-                                        'head_type': head_type,
-                                        'epoch': best_epochs,
+                                        'dataset': dataset_name,
                                         'trial_number': trial,
-
-                                        'valid-acc': val_acc,
-                                        'valid-base-max-prob-roc-auc': max_prob_val,
-                                        'valid-fine-tune-max-prob-roc-auc': val_auc,
-
-                                        'test-acc': test_acc,
-                                        'test-base-max-prob-roc-auc': test_max_prob_auc,
-                                        'test-fine-tune-max-prob-roc-auc': test_auc,
+                                        'grid': cfg.grid.name,
+                                        'seed': cfg.seed,
+                                        'head_type': head_type,
                                     }
-                                    metric_df = pd.DataFrame([current_state])
-                                    result_dict = {
-                                        'metric_df': metric_df,
-                                        'original_model_scores': {
-                                            'logits': np.array(test_logits),
-                                            'targets': np.array(test_original_targets),
-                                        },
-                                        'adue_uncertainty_head_scores': {
-                                            'logits': np.array(predicted_test_pred),
-                                            'targets': np.array(predicted_test_target)
-                                        },
-                                        'layer_state': candidate_head.cpu().state_dict()
-                                    }
-                                    if val_auc > best_val_auc:
-                                        best_state = result_dict
-                                        best_val_auc = val_auc
+                                )
+                                val_auc, predicted_val_pred, predicted_val_target = evaluate_smooth_head(
+                                    candidate_head, val_features, val_errors, device
+                                )
 
-                                    all_states.append(result_dict)
-                                    trial += 1
-                                    pbar_main.update(1)
+                                best_lr = lr
+                                best_lam = lam
+                                best_reg_alpha = reg_alpha
+                                best_l2sp_alpha = l2sp_alpha
+                                test_auc, predicted_test_pred, predicted_test_target = evaluate_smooth_head(
+                                    candidate_head, test_features, test_errors, device
+                                )
+
+                                current_state = {
+                                    'model': model_cfg._name_or_path,
+                                    'adapter': adapter_name,
+                                    'dataset': dataset_name,
+                                    'train_on_dataset': cfg.train_on_dataset,
+                                    'seed': cfg.seed,
+                                    'grid': cfg.grid.name,
+                                    'lam': best_lam,
+                                    'reg_alpha': best_reg_alpha,
+                                    'l2sp_alpha': best_l2sp_alpha,
+                                    'load_weights': load_weights,
+                                    'lr': best_lr,
+                                    'head_type': head_type,
+                                    'trial_number': trial,
+
+                                    'valid-acc': val_acc,
+                                    'valid-base-max-prob-roc-auc': max_prob_val,
+                                    'valid-fine-tune-max-prob-roc-auc': val_auc,
+
+                                    'test-acc': test_acc,
+                                    'test-base-max-prob-roc-auc': test_max_prob_auc,
+                                    'test-fine-tune-max-prob-roc-auc': test_auc,
+                                }
+                                metric_df = pd.DataFrame([current_state])
+                                result_dict = {
+                                    'metric_df': metric_df,
+                                    'original_model_scores': {
+                                        'logits': np.array(test_logits),
+                                        'targets': np.array(test_original_targets),
+                                    },
+                                    'adue_uncertainty_head_scores': {
+                                        'logits': np.array(predicted_test_pred),
+                                        'targets': np.array(predicted_test_target)
+                                    },
+                                    'layer_state': candidate_head.cpu().state_dict()
+                                }
+                                if val_auc > best_val_auc:
+                                    best_state = result_dict
+                                    best_val_auc = val_auc
+
+                                all_states.append(result_dict)
+                                trial += 1
+                                pbar_main.update(1)
     return best_state, all_states
+
 
 def search_hyperparameters(
         model_cfg, original_head, train_features, train_labels, train_max_probs,
@@ -610,11 +609,11 @@ def search_hyperparameters(
     head_type = cfg.grid.get('head_type', 'entropy')
 
     total_experiments = (
-        len(grid.reg_alpha_candidates) *
-        len(grid.lambda_candidates) *
-        len(grid.learning_rates) *
-        len(grid.reg_l2sp_candidates) *
-        len(grid.epoch_candidates)
+            len(grid.reg_alpha_candidates) *
+            len(grid.lambda_candidates) *
+            len(grid.learning_rates) *
+            len(grid.reg_l2sp_candidates) *
+            len(grid.epoch_candidates)
     )
     best_state = None
     all_states = []
@@ -769,11 +768,11 @@ def calculate_base_metrics(logits, errors):
     entropy = (-p * torch.log2(p + 1e-8)).sum(dim=1)
     sr = 1 - p.amax(dim=-1)
 
-
     return {
         'roc_auc_entropy': f"{roc_auc_score(errors, entropy):.4f}",
         'roc_auc_sr': f"{roc_auc_score(errors, sr):.4f}",
     }
+
 
 def search_hyperparameters_v2(
         model_cfg, original_head,
@@ -788,13 +787,12 @@ def search_hyperparameters_v2(
     num_classes = test_logits.size(1)
     head_types = cfg.grid.head_type
 
-
     total_experiments = (
-        len(grid.reg_alpha_candidates) *
-        len(grid.lambda_candidates) *
-        len(grid.learning_rates) *
-        len(grid.reg_l2sp_candidates) *
-        len(grid.epoch_candidates)
+            len(grid.reg_alpha_candidates) *
+            len(grid.lambda_candidates) *
+            len(grid.learning_rates) *
+            len(grid.reg_l2sp_candidates) *
+            len(grid.epoch_candidates)
     )
     best_state = None
     all_states = []
