@@ -320,7 +320,7 @@ def train_smooth_head_lightning(
 
     mlflow_logger = L.pytorch.loggers.MLFlowLogger(
         experiment_name=f'{log_params["model"]}_{log_params["dataset"]}',
-        tracking_uri='sqlite:////Users/HawkA/Desktop/jupyter/adue/AdUE/notebooks/database.db'
+        tracking_uri='sqlite:////${PROJECT_ROOT}/mlflow/database.db'
     )
     mlflow_logger.log_hyperparams(log_params)
 
