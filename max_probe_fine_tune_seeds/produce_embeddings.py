@@ -516,20 +516,20 @@ def train(cfg):
         original_head=original_head.cpu(),
 
         train_features=to_cpu(train_features),
-        train_labels=to_cpu(train_labels),
-        train_max_probs=to_cpu(train_max_probs),
+        train_labels=None,
+        train_max_probs=None,
         train_logits=to_cpu(train_logits),
         train_original_target=to_cpu(train_original_target),
 
         val_features=to_cpu(val_features.float()),
-        val_labels=to_cpu(val_labels),
-        val_max_probs=to_cpu(val_max_probs.float()),
+        val_labels=None,
+        val_max_probs=None,
         val_logits=to_cpu(val_logits.float()),
         val_original_targets=to_cpu(val_original_target),
 
         test_features=to_cpu(test_features.float()),
-        test_labels=to_cpu(test_labels.float()),
-        test_max_probs=to_cpu(test_max_probs.float()),
+        test_labels=None,
+        test_max_probs=None,
         test_logits=to_cpu(test_logits.float()),
         test_original_targets=to_cpu(test_original_targets),
 
