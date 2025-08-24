@@ -370,33 +370,39 @@ def train(cfg):
     os.makedirs(cfg.save_dir, exist_ok=True)
 
     adapter_path = cfg.adapter.path
-
-    try:
-        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
-            adapter_path,
-            **hydra.utils.instantiate(cfg.model)
-        )
-        adapter_name = model.peft_config['default'].__class__.__name__
-        model = model.eval().merge_and_unload().to(device)
-        tokenizer = transformers.AutoTokenizer.from_pretrained(model.config._name_or_path)
-    except:
+    if cfg.get('base_model', False):
         model = transformers.AutoModelForSequenceClassification.from_pretrained(
             adapter_path,
-            **hydra.utils.instantiate(cfg.model)
         )
-        adapter_name = 'full'
+        adapter_name = 'base_full'
+        tokenizer = transformers.AutoTokenizer.from_pretrained(adapter_path)
 
-        model_mapping = {
-            'roberta': 'roberta-base',
-            'electra': 'google/electra-base-discriminator',
-            'llama': 'meta-llama/Llama-2-7b-hf',
-            'llama_chat': 'meta-llama/Llama-2-7b-chat-hf',
-            'qwen': 'qwen2.5/base.yaml'
-        }
-        tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
-        model = model.eval().to(device)
+    else:
+        try:
+            model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
+                adapter_path,
+                **hydra.utils.instantiate(cfg.model)
+            )
+            adapter_name = model.peft_config['default'].__class__.__name__
+            model = model.eval().merge_and_unload().to(device)
+            tokenizer = transformers.AutoTokenizer.from_pretrained(model.config._name_or_path)
+        except:
+            model = transformers.AutoModelForSequenceClassification.from_pretrained(
+                adapter_path,
+                **hydra.utils.instantiate(cfg.model)
+            )
+            adapter_name = 'full'
 
+            model_mapping = {
+                'roberta': 'roberta-base',
+                'electra': 'google/electra-base-discriminator',
+                'llama': 'meta-llama/Llama-2-7b-hf',
+                'llama_chat': 'meta-llama/Llama-2-7b-chat-hf',
+                'qwen': 'qwen2.5/base.yaml'
+            }
+            tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
 
+    model = model.eval().to(device)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
