@@ -2,7 +2,7 @@
 
 # to execute this experiment run:
 # python train.py experiment=example
-model_name: llama_7b_hf
+model_name: llama
 model:
   use_flash_attention_2:
     _target_: transformers.utils.is_flash_attn_2_available
