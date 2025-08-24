@@ -242,9 +242,10 @@ class SST5(BaseDataset):
 
 
 class MMLU(BaseDataset):
-    def __init__(self, n_shot=5):
+    def __init__(self, n_shot=5, debug=False):
         super().__init__()
         self.n_shot = n_shot
+        self.debug = debug
 
     def name(self) -> str:
         """Return name of dataset."""
@@ -256,7 +257,10 @@ class MMLU(BaseDataset):
 
     def load(self) -> DatasetDict:
         """Load dataset, preprocess and return train test split."""
-        data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot')
+        if self.debug:
+            data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot_debug')
+        else:
+            data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot')
         data = data.rename_column('gold', 'label')
         data = data.select_columns(['label', 'text'])
         return data
