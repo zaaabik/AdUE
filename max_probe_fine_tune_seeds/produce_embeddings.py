@@ -81,6 +81,8 @@ def extract_features(model, dataloader, device, pooling):
         with torch.no_grad():
             for batch in tqdm(dataloader, desc="Extracting features"):
                 batch = {k: v.to(device) for k, v in batch.items()}
+                for k, v in batch.items():
+                    print(k, v.shape)
                 out = model(**batch, output_hidden_states=True)
                 cls_token = pooling(
                     out.hidden_states,
