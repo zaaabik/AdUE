@@ -52,7 +52,11 @@ def eval(cfg):
     )
 
     adapter_name = 'LoRA'
-    model = model.eval().merge_and_unload().to(device)
+    try:
+        model = model.merge_and_unload()
+    except:
+        pass
+    model = model.eval().to(device)
 
     if model.config.pad_token_id is None:
         model.config.pad_token_id = model.config.eos_token_id
