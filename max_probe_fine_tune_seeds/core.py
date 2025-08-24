@@ -328,7 +328,7 @@ def train_smooth_head_lightning(
     mlflow_logger.log_hyperparams(log_params)
 
     trainer = L.Trainer(
-        accelerator='cpu',
+        # accelerator='cpu',
         num_sanity_val_steps=0,
         callbacks=[
             early_stopping_callback,
