@@ -318,7 +318,7 @@ def train_smooth_head_lightning(
         monitor=monitor,
         patience=5, mode=mode
     )
-    checkpoint_callback = L.pytorch.callbacks.ModelCheckpoint(monitor=monitor, mode=mode)
+    checkpoint_callback = L.pytorch.callbacks.ModelCheckpoint(monitor=monitor, mode=mode, save_weights_only=True)
     os.makedirs('mlflow', exist_ok=True)
 
     mlflow_logger = L.pytorch.loggers.MLFlowLogger(
