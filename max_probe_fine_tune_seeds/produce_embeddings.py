@@ -371,8 +371,10 @@ def train(cfg):
 
     adapter_path = cfg.adapter.path
     if cfg.get('base_model', False):
+        del cfg.model.num_labels
         model = transformers.AutoModelForCausalLM.from_pretrained(
             adapter_path,
+            **hydra.utils.instantiate(cfg.model)
         )
         adapter_name = 'base_full'
         tokenizer = transformers.AutoTokenizer.from_pretrained(adapter_path)
@@ -401,8 +403,8 @@ def train(cfg):
                 'qwen': 'qwen2.5/base.yaml'
             }
             tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
-            model = model.eval().to(device)
 
+    model = model.eval().to(device)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
