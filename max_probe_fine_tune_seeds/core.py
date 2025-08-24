@@ -125,7 +125,7 @@ class AdueModel(L.LightningModule):
         self.criterion = nn.BCELoss()
 
         self.initial_params = {
-            name: p.detach().clone().requires_grad_(False)
+            name: p.detach().clone().requires_grad_(False).cpu()
             for name, p in head.named_parameters()
             if p.requires_grad
         }
