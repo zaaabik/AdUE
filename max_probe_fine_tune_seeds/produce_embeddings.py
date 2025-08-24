@@ -506,7 +506,11 @@ def train(cfg):
     )
 
     def to_cpu(t):
-        return torch.tensor(t).detach().cpu()
+        if t:
+            return torch.tensor(t).detach().cpu()
+        else:
+            return t
+
 
     state = dict(
         model_cfg=model.config,
