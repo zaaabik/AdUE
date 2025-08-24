@@ -10,7 +10,7 @@ model:
     _target_: hydra.utils.get_object
     path: torch.bfloat16
 adapter:
-  path: meta-llama/Llama-2-7b-hf
+  path: meta-llama/Llama-2-7b-chat-hf
 seed: 0
 classifier_name: score
 pooling:

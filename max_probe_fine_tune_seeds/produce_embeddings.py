@@ -390,6 +390,7 @@ def train(cfg):
             'roberta': 'roberta-base',
             'electra': 'google/electra-base-discriminator',
             'llama': 'meta-llama/Llama-2-7b-hf',
+            'llama_chat': 'meta-llama/Llama-2-7b-chat-hf',
             'qwen': 'qwen2.5/base.yaml'
         }
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
