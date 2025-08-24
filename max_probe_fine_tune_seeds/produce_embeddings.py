@@ -76,7 +76,7 @@ class SmoothMaxClassifierHead(nn.Module):
 
 def extract_features(model, dataloader, device, pooling):
     model.eval()
-    features_list, labels_list, maxprob_list, logits_list, original_targets_list = [], [], [], [], []
+    features_list, logits_list, original_targets_list = [], [], []
     with torch.autocast(device_type=device):
         with torch.no_grad():
             for batch in tqdm(dataloader, desc="Extracting features"):
@@ -89,26 +89,15 @@ def extract_features(model, dataloader, device, pooling):
                     out.hidden_states,
                     input_ids=batch['input_ids'], model=model
                 )
-
-                preds = out.logits.argmax(dim=1)
-                errors = (preds != labels).float()
                 features_list.append(cls_token.cpu())
-                labels_list.append(errors.cpu())
                 logits_list.append(out.logits.cpu())
                 original_targets_list.append(labels.cpu())
 
-                probs = torch.softmax(out.logits, dim=-1)
-                maxprob_np = max_prob(probs[None].float().cpu().numpy())
-                maxprob_tensor = torch.from_numpy(maxprob_np).squeeze(0)
-                maxprob_list.append(maxprob_tensor)
-
     X = torch.cat(features_list, dim=0)
-    Y = torch.cat(labels_list, dim=0)
     logits = torch.cat(logits_list, dim=0)
-    max_probs_all = torch.cat(maxprob_list, dim=0)
     original_targets = torch.cat(original_targets_list, dim=0)
 
-    return X, Y, max_probs_all, logits, original_targets
+    return X, None, None, logits, original_targets
 
 
 def train_smooth_head(
