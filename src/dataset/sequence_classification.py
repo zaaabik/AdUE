@@ -239,3 +239,25 @@ class SST5(BaseDataset):
             "validation": data['validation'],
             "test": data['test']
         })
+
+
+class MMLU(BaseDataset):
+    def __init__(self, n_shot=5):
+        super().__init__()
+        self.n_shot = n_shot
+
+    def name(self) -> str:
+        """Return name of dataset."""
+        return "MMLU"
+
+    def num_classes(self) -> int:
+        """Return number of classes in dataset."""
+        return 4
+
+    def load(self) -> DatasetDict:
+        """Load dataset, preprocess and return train test split."""
+        data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot')
+        data = data.rename_column('gold', 'label')
+        data = data.select_columns(['label', 'text'])
+        return data
+

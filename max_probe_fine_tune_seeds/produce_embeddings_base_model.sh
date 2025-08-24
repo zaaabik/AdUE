@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/produce_embeddings.py train_on_dataset=train experiment=llama_base grid=debug data.name=MMLU
