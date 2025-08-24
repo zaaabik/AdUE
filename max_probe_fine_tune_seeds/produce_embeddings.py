@@ -371,7 +371,7 @@ def train(cfg):
 
     adapter_path = cfg.adapter.path
     if cfg.get('base_model', False):
-        model = transformers.AutoModelForSequenceClassification.from_pretrained(
+        model = transformers.AutoModelForCausalLM.from_pretrained(
             adapter_path,
         )
         adapter_name = 'base_full'
