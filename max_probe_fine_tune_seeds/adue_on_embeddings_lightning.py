@@ -12,7 +12,7 @@ from omegaconf import DictConfig
 # pylint: disable=wrong-import-position
 import rootutils
 
-rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+project_root = rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 from max_probe_fine_tune_seeds.core import search_hyperparameters_lightning
 
