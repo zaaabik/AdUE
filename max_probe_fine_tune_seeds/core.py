@@ -124,11 +124,11 @@ class AdueModel(L.LightningModule):
         self.head = head
         self.criterion = nn.BCELoss()
 
-        self.initial_params = {
-            name: p.detach().clone().requires_grad_(False).cpu()
+        self.initial_params = torch.nn.ParameterDict({
+            name: p.detach().clone().requires_grad_(False)
             for name, p in head.named_parameters()
             if p.requires_grad
-        }
+        },)
 
         self.train_roc_auc = torchmetrics.AUROC(task='binary')
         self.val_roc_auc = torchmetrics.AUROC(task='binary')
