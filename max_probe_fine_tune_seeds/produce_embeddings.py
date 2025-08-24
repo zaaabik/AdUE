@@ -91,6 +91,7 @@ def extract_features(model, dataloader, device, pooling):
                 )
                 features_list.append(cls_token.cpu())
                 logits_list.append(out.logits.cpu())
+                print(logits_list[-1].shape)
                 original_targets_list.append(labels.cpu())
 
     X = torch.cat(features_list, dim=0)
