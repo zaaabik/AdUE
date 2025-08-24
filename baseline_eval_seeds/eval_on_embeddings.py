@@ -2,7 +2,7 @@ import hydra
 import pandas as pd
 from omegaconf import DictConfig
 import pickle
-
+import transformers
 # pylint: disable=wrong-import-position
 import lightning as L
 import rootutils
@@ -44,18 +44,23 @@ def eval(cfg):
     dataset_name = dataset.name()
     num_classes = dataset.num_classes()
     cfg.model.num_labels = num_classes
-
     adapter_path = cfg.adapter.path
-    model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
-        adapter_path,
-        **hydra.utils.instantiate(cfg.model)
-    )
 
-    adapter_name = 'LoRA'
-    try:
+    if cfg.get('base_model', False):
+        del cfg.model.num_labels
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            adapter_path,
+            **hydra.utils.instantiate(cfg.model)
+        )
+        adapter_name = 'base_full'
+    else:
+
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
+            adapter_path,
+            **hydra.utils.instantiate(cfg.model)
+        )
+        adapter_name = 'LoRA'
         model = model.merge_and_unload()
-    except:
-        pass
     model = model.eval().to(device)
 
     if model.config.pad_token_id is None:
