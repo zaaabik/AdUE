@@ -81,8 +81,9 @@ def extract_features(model, dataloader, device, pooling):
         with torch.no_grad():
             for batch in tqdm(dataloader, desc="Extracting features"):
                 batch = {k: v.to(device) for k, v in batch.items()}
-                for k, v in batch.items():
-                    print(k, v.shape)
+                labels = batch["labels"]
+                del batch["labels"]
+
                 out = model(**batch, output_hidden_states=True)
                 cls_token = pooling(
                     out.hidden_states,
@@ -90,11 +91,11 @@ def extract_features(model, dataloader, device, pooling):
                 )
 
                 preds = out.logits.argmax(dim=1)
-                errors = (preds != batch["labels"]).float()
+                errors = (preds != labels).float()
                 features_list.append(cls_token.cpu())
                 labels_list.append(errors.cpu())
                 logits_list.append(out.logits.cpu())
-                original_targets_list.append(batch["labels"].cpu())
+                original_targets_list.append(labels.cpu())
 
                 probs = torch.softmax(out.logits, dim=-1)
                 maxprob_np = max_prob(probs[None].float().cpu().numpy())
