@@ -342,7 +342,7 @@ def train_smooth_head_lightning(
         ],
         log_every_n_steps=25,
         max_epochs=50,
-        enable_progress_bar=True
+        enable_progress_bar=False
     )
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     mlflow_logger.log_hyperparams({'best_path': trainer.checkpoint_callback.best_model_path})
@@ -682,8 +682,8 @@ def search_hyperparameters(
                                     'l2sp_α': l2sp_alpha,
                                     'epochs': ep,
                                     'load_weights': load_weights,
-                                    'base_sr_response_auc': f"{test_max_prob_auc_v2:.4f}",
-                                    'best_auc': f"{best_val_auc:.4f}"
+                                    # 'base_sr_response_auc': f"{test_max_prob_auc_v2:.4f}",
+                                    # 'best_auc': f"{best_val_auc:.4f}"
                                 })
                                 if head_type == 'sr':
                                     candidate_head = SmoothMaxClassifierHead(
