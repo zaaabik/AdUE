@@ -296,7 +296,7 @@ def train_smooth_head_lightning(
         shuffle=True,
         generator=generator,
         num_workers=0,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     val_dataset = torch.utils.data.TensorDataset(val_features, val_errors, val_base_pred)
@@ -306,7 +306,7 @@ def train_smooth_head_lightning(
         shuffle=False,
         generator=generator,
         num_workers=0,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     model = AdueModel(
@@ -374,7 +374,7 @@ def train_smooth_head(
         shuffle=True,
         generator=generator,
         num_workers=0,
-        pin_memory=True,
+        pin_memory=False,
     )
 
     initial_params = {
