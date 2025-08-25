@@ -611,7 +611,7 @@ def search_hyperparameters_lightning(
                                     best_state = result_dict
                                     best_val_auc = val_auc
 
-                                all_states.append(result_dict)
+                                # all_states.append(result_dict)
                                 trial += 1
                                 pbar_main.update(1)
     return best_state, all_states
