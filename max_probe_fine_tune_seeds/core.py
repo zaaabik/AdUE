@@ -565,51 +565,52 @@ def search_hyperparameters_lightning(
                                     candidate_head, val_features, val_errors, device
                                 )
 
-                                best_lr = lr
-                                best_lam = lam
-                                best_reg_alpha = reg_alpha
-                                best_l2sp_alpha = l2sp_alpha
-                                test_auc, predicted_test_pred, predicted_test_target = evaluate_smooth_head(
-                                    candidate_head, test_features, test_errors, device
-                                )
-
-                                current_state = {
-                                    'model': model_cfg._name_or_path,
-                                    'adapter': adapter_name,
-                                    'dataset': dataset_name,
-                                    'train_on_dataset': cfg.train_on_dataset,
-                                    'seed': cfg.seed,
-                                    'grid': cfg.grid.name,
-                                    'lam': best_lam,
-                                    'reg_alpha': best_reg_alpha,
-                                    'l2sp_alpha': best_l2sp_alpha,
-                                    'load_weights': load_weights,
-                                    'lr': best_lr,
-                                    'head_type': head_type,
-                                    'trial_number': trial,
-
-                                    'valid-acc': val_acc,
-                                    'valid-base-max-prob-roc-auc': max_prob_val,
-                                    'valid-fine-tune-max-prob-roc-auc': val_auc,
-
-                                    'test-acc': test_acc,
-                                    'test-base-max-prob-roc-auc': test_max_prob_auc,
-                                    'test-fine-tune-max-prob-roc-auc': test_auc,
-                                }
-                                metric_df = pd.DataFrame([current_state])
-                                result_dict = {
-                                    'metric_df': metric_df,
-                                    'original_model_scores': {
-                                        'logits': np.array(test_logits),
-                                        'targets': np.array(test_original_targets),
-                                    },
-                                    'adue_uncertainty_head_scores': {
-                                        'logits': np.array(predicted_test_pred),
-                                        'targets': np.array(predicted_test_target)
-                                    },
-                                    'layer_state': candidate_head.cpu().state_dict()
-                                }
                                 if val_auc > best_val_auc:
+                                    best_lr = lr
+                                    best_lam = lam
+                                    best_reg_alpha = reg_alpha
+                                    best_l2sp_alpha = l2sp_alpha
+                                    test_auc, predicted_test_pred, predicted_test_target = evaluate_smooth_head(
+                                        candidate_head, test_features, test_errors, device
+                                    )
+
+                                    current_state = {
+                                        'model': model_cfg._name_or_path,
+                                        'adapter': adapter_name,
+                                        'dataset': dataset_name,
+                                        'train_on_dataset': cfg.train_on_dataset,
+                                        'seed': cfg.seed,
+                                        'grid': cfg.grid.name,
+                                        'lam': best_lam,
+                                        'reg_alpha': best_reg_alpha,
+                                        'l2sp_alpha': best_l2sp_alpha,
+                                        'load_weights': load_weights,
+                                        'lr': best_lr,
+                                        'head_type': head_type,
+                                        'trial_number': trial,
+
+                                        'valid-acc': val_acc,
+                                        'valid-base-max-prob-roc-auc': max_prob_val,
+                                        'valid-fine-tune-max-prob-roc-auc': val_auc,
+
+                                        'test-acc': test_acc,
+                                        'test-base-max-prob-roc-auc': test_max_prob_auc,
+                                        'test-fine-tune-max-prob-roc-auc': test_auc,
+                                    }
+                                    metric_df = pd.DataFrame([current_state])
+                                    result_dict = {
+                                        'metric_df': metric_df,
+                                        'original_model_scores': {
+                                            'logits': np.array(test_logits),
+                                            'targets': np.array(test_original_targets),
+                                        },
+                                        'adue_uncertainty_head_scores': {
+                                            'logits': np.array(predicted_test_pred),
+                                            'targets': np.array(predicted_test_target)
+                                        },
+                                        'layer_state': candidate_head.cpu().state_dict()
+                                    }
+
                                     best_state = result_dict
                                     best_val_auc = val_auc
 
