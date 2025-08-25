@@ -446,6 +446,7 @@ def search_hyperparameters_lightning(
         test_features, test_logits, test_original_targets,
         device, smooth_batch_size, adapter_name, dataset_name, cfg
 ):
+
     best_val_auc = -1
     trial = 0
     grid = cfg.grid
