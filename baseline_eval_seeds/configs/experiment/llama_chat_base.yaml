@@ -2,7 +2,7 @@
 
 # to execute this experiment run:
 # python train.py experiment=example
-model_name: meta-llama/Llama-2-7b-chat-hf
+model_name: Llama-2-7b-chat-hf
 base_model: true
 model:
   torch_dtype:
