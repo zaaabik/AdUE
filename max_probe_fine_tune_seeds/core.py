@@ -11,6 +11,8 @@ from tqdm import tqdm
 from transformers.models.electra.modeling_electra import ElectraClassificationHead
 from transformers.models.roberta.modeling_roberta import RobertaClassificationHead
 import lightning as L
+import os
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 batch_size = 256
@@ -345,6 +347,7 @@ def train_smooth_head_lightning(
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     mlflow_logger.log_hyperparams({'best_path': trainer.checkpoint_callback.best_model_path})
     best_model = AdueModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+    os.remove(trainer.checkpoint_callback.best_model_path)
 
 
     return best_model.head
