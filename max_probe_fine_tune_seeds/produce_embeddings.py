@@ -547,7 +547,7 @@ def train(cfg):
         pickle.dump(state, f)
 
 
-@hydra.main(version_base="1.3", config_path="configs", config_name="train.yaml")
+@hydra.main(version_base="1.3", config_path="configs", config_name="produce_embeddings.yaml")
 def main(cfg: DictConfig):
     """Main entry point for inference.
 
