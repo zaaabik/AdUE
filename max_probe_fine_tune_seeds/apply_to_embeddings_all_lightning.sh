@@ -41,3 +41,5 @@ OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.
 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.py -m train_on_dataset=train experiment=qwen grid=${grid_name} data.name=SST5,SST2,cola,toxigen,20newsgroups seed=4,3 &
 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.py -m train_on_dataset=train experiment=electra grid=${grid_name} data.name=SST5,SST2,cola,toxigen,20newsgroups seed=4,3  &
 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.py -m train_on_dataset=train experiment=llama grid=${grid_name} data.name=SST5,SST2,cola,toxigen,20newsgroups seed=4,3  &
+
+
