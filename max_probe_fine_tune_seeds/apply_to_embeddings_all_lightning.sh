@@ -1,3 +1,4 @@
+export CUDA_VISIBLE_DEVICES=
 export grid_name=entropyft,entropyft_ablation_bce_only
 OMP_NUM_THREADS=4 python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.py -m train_on_dataset=train \
 experiment=llama_chat_base grid=${grid_name} data.name=MMLU seed=0 \

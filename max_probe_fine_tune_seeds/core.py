@@ -342,7 +342,7 @@ def train_smooth_head_lightning(
         ],
         log_every_n_steps=25,
         max_epochs=50,
-        enable_progress_bar=False
+        enable_progress_bar=True
     )
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     mlflow_logger.log_hyperparams({'best_path': trainer.checkpoint_callback.best_model_path})
