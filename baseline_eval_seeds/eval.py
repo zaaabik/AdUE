@@ -242,10 +242,10 @@ def extract_features(model, dataloader, pooling):
     logits = []
     targets = []
     features = []
-    device = 'cuda'
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
     model.eval().cuda()
-    with torch.autocast(device_type='cuda:0', dtype=torch.bfloat16):
+    with torch.autocast(device_type=device, dtype=torch.bfloat16):
         with torch.no_grad():
             for batch in tqdm(dataloader, desc="Extracting features"):
                 batch = {k: v.to(device) for k, v in batch.items()}
