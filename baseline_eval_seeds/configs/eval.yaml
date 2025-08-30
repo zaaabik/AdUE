@@ -16,7 +16,7 @@ model:
     path: torch.bfloat16
   num_labels: 0
 adapter:
-  path: ${oc.env:BASE_WEIGHT_PATH}/${model_name}_runs_seeds/${data.name}/${seed}
+  path: ${oc.env:PROJECT_ROOT}/data/models/${model_name}_runs_seeds/${data.name}/${seed}/
 save_dir: ${oc.env:PROJECT_ROOT}/baseline_eval_seeds/results/${model_name}_results_ds_${train_on_dataset}
 train_on_dataset: train
 extract_features:

@@ -3,6 +3,7 @@ import pandas as pd
 from omegaconf import DictConfig
 
 # pylint: disable=wrong-import-position
+import pickle
 import lightning as L
 import rootutils
 from torch.nn import functional as F
@@ -169,14 +170,17 @@ def eval(cfg):
         errors = test_targets != test_logits.argmax(dim=1)
 
         rde_roc_auc = {}
-        for n_components in cfg.rde_n_components:
-            _rde_dist = rde_distance(
-                train_features, test_features, n_components=n_components
-            )
-
-            rde_roc_auc[f'rde_n_components_{n_components}_roc_auc'] = roc_auc_score(
-                errors, _rde_dist
-            )
+        rde_predictions = {}
+        print('RDE 256')
+        # for n_components in cfg.rde_n_components:
+        #     _rde_dist = rde_distance(
+        #         train_features, test_features, n_components=n_components
+        #     )
+        #
+        #     rde_roc_auc[f'rde_n_components_{n_components}_roc_auc'] = roc_auc_score(
+        #         errors, _rde_dist
+        #     )
+        #     rde_predictions[f'rde_n_components_{n_components}'] = _rde_dist
 
         probs = torch.softmax(test_logits, dim=-1)
         md_roc_auc = roc_auc_score(errors, md)
@@ -211,6 +215,27 @@ def eval(cfg):
             os.path.join(cfg.save_dir, f"{adapter_name}_{dataset_name}_{cfg.seed}_{cfg.normalization}_baselines.csv"),
             index=False
         )
+
+        final_state = {
+            'metric_df': metric_df,
+            'prediction': {
+                'targets': test_targets,
+                'logits': test_logits,
+                'md': md,
+                'md_marginal': md_marginal,
+                'md_relative': md_relative,
+                'sr': 1 - probs.amax(dim=-1),
+                **rde_predictions
+            }
+        }
+        final_state_save_path = os.path.join(
+            cfg.save_dir,
+            f"{adapter_name}_{dataset_name}_seed_{cfg.seed}_normalization_{cfg.normalization}_baselines_state"
+            f".pkl"
+        )
+        print(f'Save prediction: {final_state_save_path}')
+        with open(final_state_save_path, 'wb') as f:
+            pickle.dump(final_state, f)
 
 
 def extraxt_features(model, dataloader, pooling):
