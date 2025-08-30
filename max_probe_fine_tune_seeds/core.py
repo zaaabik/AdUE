@@ -336,7 +336,6 @@ def train_smooth_head_lightning(
     mlflow_logger.log_hyperparams(log_params)
 
     trainer = L.Trainer(
-        accelerator='cpu',
         # precision='16-mixed',
         num_sanity_val_steps=0,
         callbacks=[
@@ -456,7 +455,7 @@ def search_hyperparameters_lightning(
         test_features, test_logits, test_original_targets,
         device, smooth_batch_size, adapter_name, dataset_name, cfg
 ):
-
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
     best_val_auc = -1
     trial = 0
     grid = cfg.grid
