@@ -351,7 +351,7 @@ def train_smooth_head_lightning(
     )
     trainer.fit(model, train_dataloaders=train_loader, val_dataloaders=val_loader)
     mlflow_logger.log_hyperparams({'best_path': trainer.checkpoint_callback.best_model_path})
-    best_model = AdueModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+    best_model = AdueModel.load_from_checkpoint(trainer.checkpoint_callback.best_model_path, head=smooth_head)
     os.remove(trainer.checkpoint_callback.best_model_path)
     mlflow_logger.finalize("success")
 
