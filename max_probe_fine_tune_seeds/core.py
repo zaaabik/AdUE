@@ -26,7 +26,7 @@ class EntropyClassifierHead(nn.Module):
         if isinstance(original_lm_head, torch.nn.Linear):
             self.head = torch.nn.Linear(
                 original_lm_head.in_features, original_lm_head.out_features,
-                bias=original_lm_head.bias
+                bias=(original_lm_head.bias is not None)
             )
             self.need_to_add_dim = False
         elif isinstance(original_lm_head, (RobertaClassificationHead, ElectraClassificationHead)):
@@ -158,6 +158,12 @@ class AdueModel(L.LightningModule):
         elif mode == 'min':
             self.best_metric = torchmetrics.MinMetric()
 
+    def on_fit_start(self):
+        self.initial_params = {
+            n: p.detach().clone().to(self.device).requires_grad_(False)
+            for n, p in self.initial_params.items()
+        }
+
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop.
         # it is independent of forward
@@ -166,7 +172,7 @@ class AdueModel(L.LightningModule):
         loss_main = self.criterion(outputs, errors)
 
         reg_loss = torch.mean((outputs - base_probs) ** 2)
-        l2sp_loss = 0
+        l2sp_loss = torch.tensor(0.0, device=self.device)
         for name, param in self.head.named_parameters():
             if param.requires_grad:
                 l2sp_loss += torch.sum((param - self.initial_params[name]) ** 2)
