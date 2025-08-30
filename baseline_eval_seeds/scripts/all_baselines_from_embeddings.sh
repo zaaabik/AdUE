@@ -1,22 +1,22 @@
 OMP_NUM_THREADS=4 python \
 baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
-normalization=true experiment=llama,electra,roberta seed=0,1,2,3,4 data.name=ToxigenDataset \
+normalization=true experiment=electra,roberta,llama seed=0,1,2,3,4 data.name=ToxigenDataset \
 embedding_path='${oc.env:PROJECT_ROOT}/embeddings/${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_toxigen_state.pickle'
 OMP_NUM_THREADS=4 python \
 baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
-normalization=true experiment=llama,electra,roberta seed=0,1,2,3,4 data.name=NewsGroups \
+normalization=true experiment=electra,roberta,llama seed=0,1,2,3,4 data.name=NewsGroups \
 embedding_path='${oc.env:PROJECT_ROOT}/data/embeddings//${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_20newsgroups_state.pickle'
 OMP_NUM_THREADS=4 python \
 baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
-normalization=true experiment=llama,electra,roberta seed=0,1,2,3,4 data.name=CoLa \
+normalization=true experiment=electra,roberta,llama seed=0,1,2,3,4 data.name=CoLa \
 embedding_path='${oc.env:PROJECT_ROOT}/data/embeddings//${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_cola_state.pickle'
 OMP_NUM_THREADS=4 python \
 baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
-normalization=true experiment=llama,electra,roberta seed=0,1,2,3,4 data.name=SST5 \
+normalization=true experiment=electra,roberta,llama seed=0,1,2,3,4 data.name=SST5 \
 embedding_path='${oc.env:PROJECT_ROOT}/data/embeddings//${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_SST5_state.pickle'
 OMP_NUM_THREADS=4 python \
 baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
-normalization=true experiment=llama,electra,roberta seed=0,1,2,3,4 data.name=SST2 \
+normalization=true experiment=electra,roberta,llama seed=0,1,2,3,4 data.name=SST2 \
 embedding_path='${oc.env:PROJECT_ROOT}/data/embeddings//${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_SST2_state.pickle'
 
 
