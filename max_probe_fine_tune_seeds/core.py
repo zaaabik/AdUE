@@ -104,7 +104,7 @@ class SmoothMaxClassifierHead(nn.Module):
 
 
 def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
-    smooth_head.eval()
+    smooth_head.eval().to(device)
 
     all_preds = []
     all_labels = []
