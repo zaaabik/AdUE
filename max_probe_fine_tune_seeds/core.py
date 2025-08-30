@@ -121,7 +121,7 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
 
 class AdueModel(L.LightningModule):
     def __init__(self, head, lr, reg_alpha, l2sp_alpha, mode='max'):
-        super().__init__()
+        super().__init__(ignore=['head'])
         self.save_hyperparameters()
         self.head = head
         self.criterion = nn.BCELoss()
@@ -466,8 +466,7 @@ def search_hyperparameters_lightning(
             len(grid.reg_alpha_candidates) *
             len(grid.lambda_candidates) *
             len(grid.learning_rates) *
-            len(grid.reg_l2sp_candidates) *
-            len(grid.epoch_candidates)
+            len(grid.reg_l2sp_candidates)
     )
     best_state = None
     all_states = []
