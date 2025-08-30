@@ -126,7 +126,8 @@ def eval(cfg):
 
     pooling = hydra.utils.instantiate(cfg.pooling)
     embedding_head = get_embedding_head(original_head, model.config)
-    device = model.device
+    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    model.to(device)
     embedding_head.to(device=device, dtype=torch.float32)
 
     raw_train_features, train_logits, train_targets = extract_features(model, train_dataloader, pooling)
