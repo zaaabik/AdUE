@@ -1,4 +1,4 @@
-import os
+import gc
 
 import pandas as pd
 
@@ -355,8 +355,11 @@ def train_smooth_head_lightning(
     os.remove(trainer.checkpoint_callback.best_model_path)
     mlflow_logger.finalize("success")
 
+    del model
+    del trainer
+    gc.collect()
 
-    return best_model.head
+    return best_model.head.cpu()
 
 
 def train_smooth_head(
