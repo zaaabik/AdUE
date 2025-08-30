@@ -566,10 +566,14 @@ def search_hyperparameters_lightning(
                                         'adapter': adapter_name,
                                         'train_on_dataset': cfg.train_on_dataset,
                                         'dataset': dataset_name,
+                                        'load_weights' : load_weights,
                                         'trial_number': trial,
                                         'grid': cfg.grid.name,
                                         'seed': cfg.seed,
                                         'head_type': head_type,
+                                        'lr': lr,
+                                        'reg_alpha': reg_alpha,
+                                        'l2sp_alpha': l2sp_alpha,
                                     }
                                 )
                                 val_auc, predicted_val_pred, predicted_val_target = evaluate_smooth_head(
