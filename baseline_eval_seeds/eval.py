@@ -129,8 +129,8 @@ def eval(cfg):
     device = model.device
     embedding_head.to(device=device, dtype=torch.float32)
 
-    raw_train_features, train_logits, train_targets = extraxt_features(model, train_dataloader, pooling)
-    raw_test_features, test_logits, test_targets = extraxt_features(model, test_dataloader, pooling)
+    raw_train_features, train_logits, train_targets = extract_features(model, train_dataloader, pooling)
+    raw_test_features, test_logits, test_targets = extract_features(model, test_dataloader, pooling)
     with torch.no_grad():
         embedding_head.train()
         embedding_head(raw_train_features.to(device))
@@ -238,7 +238,7 @@ def eval(cfg):
             pickle.dump(final_state, f)
 
 
-def extraxt_features(model, dataloader, pooling):
+def extract_features(model, dataloader, pooling):
     logits = []
     targets = []
     features = []
