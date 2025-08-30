@@ -3,6 +3,7 @@ python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.py -m train_on_dat
 experiment=llama_chat_base grid=${grid_name} data.name=MMLU seed=0 \
 embedding_path='${oc.env:PROJECT_ROOT}/data/embeddings/llama_chat_results_ds_0_train_gird_full/state.pkl' &
 
+sleep 2
 
 export grid_name=entropyft_ablation_bce_only_linear_random,entropyft_l2sp,entropyft_reg
 python max_probe_fine_tune_seeds/adue_on_embeddings_lightning.py -m train_on_dataset=train \
