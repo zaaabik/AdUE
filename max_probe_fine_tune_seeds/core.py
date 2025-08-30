@@ -122,7 +122,7 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
 class AdueModel(L.LightningModule):
     def __init__(self, head, lr, reg_alpha, l2sp_alpha, mode='max'):
         super().__init__()
-        self.save_hyperparameters(logger=False)
+        self.save_hyperparameters(ignore=['head'], logger=False)
         self.head = head
         self.criterion = nn.BCELoss()
 
