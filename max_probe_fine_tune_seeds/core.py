@@ -808,8 +808,8 @@ def calculate_base_metrics(logits, errors):
     sr = 1 - p.amax(dim=-1)
 
     return {
-        'roc_auc_entropy': f"{roc_auc_score(errors, entropy):.4f}",
-        'roc_auc_sr': f"{roc_auc_score(errors, sr):.4f}",
+        # 'roc_auc_entropy': f"{roc_auc_score(errors, entropy):.4f}",
+        # 'roc_auc_sr': f"{roc_auc_score(errors, sr):.4f}",
     }
 
 
