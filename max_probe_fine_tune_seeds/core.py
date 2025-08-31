@@ -116,7 +116,9 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
             end = start + batch_size
             batch = val_features[start:end].to(device, dtype=torch.float32)
             out = smooth_head(batch)
-            all_preds.extend(out.float().cpu().numpy().tolist())
+            all_preds.append(out.float().cpu().numpy())
+
+    all_preds = np.concatenate(all_preds)
 
     auc = roc_auc_score(np.array(all_labels), np.array(all_preds))
     return auc, np.array(all_preds), np.array(all_labels)
