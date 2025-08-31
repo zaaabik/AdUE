@@ -50,6 +50,7 @@ def eval(cfg):
         del cfg.model.num_labels
         model = transformers.AutoModelForCausalLM.from_pretrained(
             adapter_path,
+            **hydra.utils.instantiate(cfg.model)
         )
         adapter_name = 'base_full'
     else:
