@@ -269,6 +269,6 @@ class MMLU(BaseDataset):
         else:
             data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot')
         data = data.rename_column('gold', 'label')
-        data = data.select_columns(['label', 'text', 'choices'])
+        data = data.select_columns(['label', 'text'])
         return data
 
