@@ -1,5 +1,13 @@
 OMP_NUM_THREADS=4 python \
 baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
+normalization=true experiment=llama_chat_base seed=0 data.name=MMLU \
+++data.dataset.n_shot=0 \
+embedding_path='${oc.env:PROJECT_ROOT}/data/embeddings/Llama-2-7b-chat-hf_results_ds_0_train_gird_full/base_full_MMLU_0_shot_state.pickle'
+
+
+
+OMP_NUM_THREADS=4 python \
+baseline_eval_seeds/eval_on_embeddings.py -m train_on_dataset=train \
 normalization=true experiment=electra,roberta,llama seed=0,1,2,3,4 data.name=ToxigenDataset \
 embedding_path='${oc.env:PROJECT_ROOT}/embeddings/${model_name}_results_ds_${seed}_train_gird_full/LoraConfig_toxigen_state.pickle'
 OMP_NUM_THREADS=4 python \
