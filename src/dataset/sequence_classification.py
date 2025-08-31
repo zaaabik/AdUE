@@ -249,7 +249,9 @@ class MMLU(BaseDataset):
 
     def name(self) -> str:
         """Return name of dataset."""
-        return "MMLU"
+        if self.debug:
+            return f"MMLU_{self.n_shot}_shot_debug"
+        return f"MMLU_{self.n_shot}_shot"
 
     def num_classes(self) -> int:
         """Return number of classes in dataset."""
