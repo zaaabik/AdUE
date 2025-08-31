@@ -366,10 +366,10 @@ def search_hyperparameters(
 
 
 def train(cfg):
-    dataset = hydra.utils.instantiate(cfg.data.dataset)
-    dataset_name = dataset.name()
-    num_classes = dataset.num_classes()
-    dataset = dataset.load()
+    base_dataset = hydra.utils.instantiate(cfg.data.dataset)
+    dataset_name = base_dataset.name()
+    num_classes = base_dataset.num_classes()
+    dataset = base_dataset.load()
     cfg.model.num_labels = num_classes
     os.makedirs(cfg.save_dir, exist_ok=True)
 
@@ -404,7 +404,7 @@ def train(cfg):
                 'electra': 'google/electra-base-discriminator',
                 'llama': 'meta-llama/Llama-2-7b-hf',
                 'llama_chat': 'meta-llama/Llama-2-7b-chat-hf',
-                'qwen': 'qwen2.5/base.yaml'
+                'qwen': 'Qwen/Qwen2.5-7B'
             }
             tokenizer = transformers.AutoTokenizer.from_pretrained(model_mapping[cfg.model_name])
 
@@ -508,6 +508,27 @@ def train(cfg):
         if t is None:
             return None
         return torch.tensor(t).detach().cpu()
+
+    if cfg.get('map_targets', False):
+        choices = base_dataset.get_choices()
+
+        mapping = [
+            (idx, tokens[0]) for tokens, idx in
+            zip(tokenizer(choices, add_special_tokens=False)['input_ids'], range(512))
+        ]
+
+        def map_tensor_values(tensor, mapping):
+            result = tensor.clone()
+            unique_keys = list(mapping.keys())
+            indices_to_update = torch.isin(result, torch.tensor(unique_keys))
+            result[indices_to_update] = torch.tensor([mapping.get(x.item(), x) for x in result[indices_to_update]])
+            return result
+
+        train_original_target = map_tensor_values(train_original_target, dict(mapping))
+        val_original_target = map_tensor_values(val_original_target, dict(mapping))
+        test_original_targets = map_tensor_values(test_original_targets, dict(mapping))
+
+
 
 
     state = dict(

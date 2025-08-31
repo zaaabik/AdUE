@@ -255,6 +255,13 @@ class MMLU(BaseDataset):
         """Return number of classes in dataset."""
         return 4
 
+    def get_choices(self):
+        if self.debug:
+            data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot_debug')
+        else:
+            data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot')
+        return data['train'][0]['choices']
+
     def load(self) -> DatasetDict:
         """Load dataset, preprocess and return train test split."""
         if self.debug:
@@ -262,6 +269,6 @@ class MMLU(BaseDataset):
         else:
             data = load_dataset(f'zaaabik/mmlu_{self.n_shot}_shot')
         data = data.rename_column('gold', 'label')
-        data = data.select_columns(['label', 'text'])
+        data = data.select_columns(['label', 'text', 'choices'])
         return data
 

@@ -17,3 +17,4 @@ classifier_name: lm_head
 pooling:
   _target_: src.utils.pooling.LastTokenPooling
   layer_number: -1
+map_targets: true
