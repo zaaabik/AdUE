@@ -6,8 +6,7 @@ class LastTokenPooling:
         self.layer_number = layer_number
 
     def __call__(self, hidden_states, input_ids, model):
-        # hs = hidden_states[self.layer_number]
-        hs = hidden_states
+        hs = hidden_states[self.layer_number]
         bs = input_ids.shape[0]
 
         non_pad_mask = (input_ids != model.config.pad_token_id).to(device=hs.device, dtype=torch.int32)

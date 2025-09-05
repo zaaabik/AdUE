@@ -103,7 +103,6 @@ def extract_features(model, dataloader, device, pooling):
 
                     pooled_logits = hs[torch.arange(bs, device=hs.device), last_non_pad_token]
                     logits_list.append(pooled_logits.cpu())
-                    print('Acc: ', (pooled_logits.argmax(axis=-1) == labels))
                 original_targets_list.append(labels.cpu())
 
     X = torch.cat(features_list, dim=0)
