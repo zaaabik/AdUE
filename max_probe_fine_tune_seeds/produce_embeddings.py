@@ -513,11 +513,11 @@ def train(cfg):
         choices = base_dataset.get_choices()
         if cfg.get('add_space', None):
             mapping = [
-                (idx, tokenizer(' ' + choice, add_special_tokens=False)['input_ids']) for choice, idx in zip(choices, range(512))
+                (idx, tokenizer(' ' + choice, add_special_tokens=False)['input_ids'][0]) for choice, idx in zip(choices, range(512))
             ]
         else:
             mapping = [
-                (idx, tokenizer(choice, add_special_tokens=False)['input_ids']) for choice, idx in zip(choices, range(512))
+                (idx, tokenizer(choice, add_special_tokens=False)['input_ids'][0]) for choice, idx in zip(choices, range(512))
             ]
 
         def map_tensor_values(tensor, mapping):
