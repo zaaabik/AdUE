@@ -511,11 +511,14 @@ def train(cfg):
 
     if cfg.get('map_targets', False):
         choices = base_dataset.get_choices()
-
-        mapping = [
-            (idx, tokens[0]) for tokens, idx in
-            zip(tokenizer(choices, add_special_tokens=False)['input_ids'], range(512))
-        ]
+        if cfg.get('add_space', None):
+            mapping = [
+                tokenizer(' ' + choice, add_special_tokens=False)['input_ids'] for choice, idx in zip(choices, range(512))
+            ]
+        else:
+            mapping = [
+                tokenizer(choice, add_special_tokens=False)['input_ids'] for choice, idx in zip(choices, range(512))
+            ]
 
         def map_tensor_values(tensor, mapping):
             result = tensor.clone()

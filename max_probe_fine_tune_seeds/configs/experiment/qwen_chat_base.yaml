@@ -4,6 +4,7 @@
 # python train.py experiment=example
 model_name: Qwen2.5-7B-Instruct
 base_model: true
+add_space: true
 model:
   use_flash_attention_2:
     _target_: transformers.utils.is_flash_attn_2_available
