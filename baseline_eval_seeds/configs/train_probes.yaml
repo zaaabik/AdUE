@@ -1,0 +1,37 @@
+defaults:
+  - _self_
+  - experiment: roberta
+
+seed: 0
+
+data:
+  name: CoLa
+  dataset:
+    _target_: src.dataset.sequence_classification.${data.name}
+  max_length: 128
+  llm_batch_size: 16
+  num_workers: 0
+
+model:
+  torch_dtype:
+    _target_: hydra.utils.get_object
+    path: torch.bfloat16
+  num_labels: 0
+
+adapter:
+  path: ${oc.env:PROJECT_ROOT}/data/models/${model_name}_runs_seeds/${data.name}/${seed}/
+
+save_dir: ${oc.env:PROJECT_ROOT}/baseline_eval_seeds/results/${model_name}_probes_ds_${train_on_dataset}
+train_on_dataset: train
+
+probes:
+  layers: [-1, -4, -8]
+  batch_size: 64
+  linear:
+    lr: 3e-4
+    epochs: 5
+  attention:
+    lr: 3e-4
+    epochs: 5
+    num_layers_add: [0, 1, 2]
+    thresholds: [0.3, 0.4, 0.5]
