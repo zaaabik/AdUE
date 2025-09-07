@@ -413,7 +413,7 @@ def train(cfg):
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
     def tokenize_function(examples):
-        return tokenizer(examples["text"], truncation=True, max_length=cfg.data.max_length)
+        return tokenizer(examples["text"], truncation=False, max_length=cfg.data.max_length)
 
     if cfg.train_on_dataset == 'train':
         train_split = (
