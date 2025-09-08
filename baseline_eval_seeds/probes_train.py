@@ -5,6 +5,7 @@ import hydra
 import lightning as L
 import numpy as np
 import pandas as pd
+import pickle
 import peft
 import rootutils
 import torch
@@ -252,6 +253,23 @@ def run(cfg: DictConfig):
             csv_path, mode="a", header=not os.path.exists(csv_path), index=False
         )
 
+        with torch.no_grad():
+            probe_cpu = probe.to(device="cpu").eval()
+            linear_scores = probe_cpu(te_X.to(dtype=torch.float32)).detach().cpu()
+        scores_state = {
+            "prediction": {
+                "targets": te_y,
+                "logits": te_logits,
+                "linear_probe": linear_scores,
+            }
+        }
+        scores_path = os.path.join(
+            cfg.save_dir,
+            f"{cfg.model_name}_{dataset_name}_seed_{cfg.seed}_{cfg.train_on_dataset}_linear_layer_{layer}_scores.pkl",
+        )
+        with open(scores_path, "wb") as f:
+            pickle.dump(scores_state, f)
+
     for layer in cfg.probes.layers:
         for num_add in cfg.probes.attention.num_layers_add:
             tr_H, tr_y, tr_logits = extract_token_hidden_states(
@@ -333,6 +351,23 @@ def run(cfg: DictConfig):
             pd.DataFrame([result_row]).to_csv(
                 csv_path, mode="a", header=not os.path.exists(csv_path), index=False
             )
+
+            with torch.no_grad():
+                probe_cpu = probe.to(device="cpu").eval()
+                attention_scores = probe_cpu(te_H.to(dtype=torch.float32)).detach().cpu()
+            scores_state = {
+                "prediction": {
+                    "targets": te_y,
+                    "logits": te_logits,
+                    "attention_probe": attention_scores,
+                }
+            }
+            scores_path = os.path.join(
+                cfg.save_dir,
+                f"{cfg.model_name}_{dataset_name}_seed_{cfg.seed}_{cfg.train_on_dataset}_attention_layer_{layer}_plus_{num_add}_scores.pkl",
+            )
+            with open(scores_path, "wb") as f:
+                pickle.dump(scores_state, f)
 
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="train_probes.yaml")
