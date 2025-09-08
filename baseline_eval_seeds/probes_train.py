@@ -1,11 +1,11 @@
 import os
+import pickle
 import random
 
 import hydra
 import lightning as L
 import numpy as np
 import pandas as pd
-import pickle
 import peft
 import rootutils
 import torch
@@ -354,7 +354,9 @@ def run(cfg: DictConfig):
 
             with torch.no_grad():
                 probe_cpu = probe.to(device="cpu").eval()
-                attention_scores = probe_cpu(te_H.to(dtype=torch.float32)).detach().cpu()
+                attention_scores = (
+                    probe_cpu(te_H.to(dtype=torch.float32)).detach().cpu()
+                )
             scores_state = {
                 "prediction": {
                     "targets": te_y,
