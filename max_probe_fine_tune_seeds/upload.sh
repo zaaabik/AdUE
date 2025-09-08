@@ -158,14 +158,8 @@ baseline_results_on_embeddings/ \
 
 
 huggingface-cli upload zaaabik/adue-results \
-/workspace/src/AdUE/baseline_eval_seeds/results_on_embeddings/ \
+/workspace/AdUE/baseline_eval_seeds/results_on_embeddings/ \
 baseline_results_on_embeddings/ \
---repo-type dataset
-
-
-huggingface-cli upload zaaabik/adue-results \
-/workspace/AdUE/max_probe_fine_tune_seeds/results_on_embeddings/ \
-results_on_embeddings_fix_mmlu/ \
 --repo-type dataset
 
 huggingface-cli upload zaaabik/adue-results \
@@ -181,6 +175,11 @@ mlflow/server_3/ \
 huggingface-cli upload zaaabik/adue-results \
 /workspace/AdUE/mlflow/database.db \
 mlflow/server_4/ \
+--repo-type dataset
+
+huggingface-cli upload zaaabik/adue-results \
+/workspace/AdUE/mlflow/database.db \
+mlflow/server_5/ \
 --repo-type dataset
 
 huggingface-cli upload zaaabik/adue-results \
@@ -220,6 +219,6 @@ results_on_embeddings/ \
 
 
 huggingface-cli upload zaaabik/adue-data \
-/workspace/src/AdUE/data/embeddings \
+/workspace/AdUE/data/embeddings \
 embeddings/ \
 --repo-type dataset
