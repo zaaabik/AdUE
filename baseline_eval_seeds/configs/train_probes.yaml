@@ -29,9 +29,8 @@ probes:
   batch_size: 64
   linear:
     lr: 3e-4
-    epochs: 5
+    epochs: 10
   attention:
     lr: 3e-4
-    epochs: 5
+    epochs: 10
     num_layers_add: [0, 1, 2]
-    thresholds: [0.3, 0.4, 0.5]
