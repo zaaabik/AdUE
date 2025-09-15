@@ -33,18 +33,20 @@ torch.backends.cudnn.benchmark = False
 
 
 @torch.no_grad()
-def extract_cls_features(model, dataloader, layer_num, device):
+def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
     model.eval().to(device)
-    features, labels, logits = [], [], []
+    features, labels, logits, length = [], [], [], []
+    pooling = hydra.utils.instantiate(pooling_cfg, layer_number=layer_num)
     for batch in tqdm(dataloader, desc=f"Extract CLS L{layer_num}"):
         batch = {k: v.to(device) for k, v in batch.items()}
         out = model(**batch, output_hidden_states=True)
-        hs = out.hidden_states[layer_num]
-        cls = hs[:, 0, :]
+        cls = pooling(out.hidden_states, batch['input_ids'], model)
         features.append(cls.cpu())
         labels.append(batch["labels"].cpu())
         logits.append(out.logits.cpu())
-    return torch.cat(features), torch.cat(labels), torch.cat(logits)
+        length.append(batch['attention_mask'].sum(axis=1))
+        break
+    return torch.cat(features), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
 @torch.no_grad()
@@ -52,7 +54,7 @@ def extract_token_hidden_states(
     model, dataloader, layer_num, num_layers_add, max_length, device
 ):
     model.eval().to(device)
-    hs_list, labels, logits = [], [], []
+    hs_list, labels, logits, length = [], [], [], []
     for batch in tqdm(dataloader, desc=f"Extract HS L{layer_num} +{num_layers_add}"):
         batch = {k: v.to(device) for k, v in batch.items()}
         out = model(**batch, output_hidden_states=True)
@@ -65,6 +67,9 @@ def extract_token_hidden_states(
         end = base_idx + 1
         hs = out.hidden_states[start:end]
         hs_combined = torch.cat(hs, dim=-1)
+        length.append(batch['attention_mask'].sum(axis=1))
+
+        hs_combined = hs_combined * batch['attention_mask'][:, :, None]
         padded = torch.zeros(
             (hs_combined.size(0), max_length, hs_combined.size(2)),
             device=hs_combined.device,
@@ -73,7 +78,8 @@ def extract_token_hidden_states(
         hs_list.append(padded.cpu())
         labels.append(batch["labels"].cpu())
         logits.append(out.logits.cpu())
-    return torch.cat(hs_list), torch.cat(labels), torch.cat(logits)
+        break
+    return torch.cat(hs_list), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
 def _build_probe_save_dir(
@@ -93,6 +99,200 @@ def _build_probe_save_dir(
     else:
         sub = f"layer_{layer}_plus_{layers_plus}"
     return os.path.join(base, sub)
+
+
+def search_hyperparameters_attention_pooling(model, train_loader, val_loader, test_loader, pooling_cfg, adapter_path, dataset_name, cfg):
+    results = {}
+    results['prediction'] = {}
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    for layer in cfg.probes.layers:
+        for num_add in cfg.probes.attention.num_layers_add:
+            tr_H, tr_y, tr_logits, tr_length = extract_token_hidden_states(
+                model, train_loader, layer, num_add, cfg.data.max_length, device
+            )
+            va_H, va_y, va_logits, va_length = extract_token_hidden_states(
+                model, val_loader, layer, num_add, cfg.data.max_length, device
+            )
+
+            errors_tr = (tr_logits.argmax(dim=1) != tr_y).float()
+            errors_va = (va_logits.argmax(dim=1) != va_y).float()
+
+            probe = AttentionProbe(tr_H.shape[-1])
+            probe = train_probe_lightning(
+                probe,
+                tr_H,
+                errors_tr,
+                tr_length,
+                va_H,
+                errors_va,
+                va_length,
+                lr=cfg.probes.attention.lr,
+                epochs=cfg.probes.attention.epochs,
+                batch_size=cfg.probes.batch_size,
+                accelerator=("gpu" if torch.cuda.is_available() else "cpu"),
+                log_params={
+                    'layer': layer,
+                    'lr': cfg.probes.linear.lr,
+                    'dataset': cfg.data.name,
+                    'type': 'attention',
+                    'num_add': num_add,
+                },
+            )
+
+            save_dir = _build_probe_save_dir(
+                project_root,
+                cfg.model_name,
+                dataset_name,
+                cfg.seed,
+                "attention",
+                layer,
+                layers_plus=num_add,
+            )
+            metadata = {
+                "probe": "attention",
+                "layer": int(layer),
+                "layers_plus": int(num_add),
+                "model_name": cfg.model_name,
+                "dataset": dataset_name,
+                "seed": int(cfg.seed),
+                "train_on_dataset": cfg.train_on_dataset,
+                "adapter_path": adapter_path,
+                "hyperparams": {
+                    "lr": float(cfg.probes.attention.lr),
+                    "epochs": int(cfg.probes.attention.epochs),
+                    "batch_size": int(cfg.probes.batch_size),
+                },
+            }
+            save_probe_model(probe, save_dir, metadata)
+
+            te_H, te_y, te_logits, te_length = extract_token_hidden_states(
+                model, test_loader, layer, num_add, cfg.data.max_length, device
+            )
+            errors_te = (te_logits.argmax(dim=1) != te_y).float()
+            auc, _, _, _ = evaluate_probe(
+                probe,
+                te_H,
+                errors_te,
+                te_length,
+                device=("cuda" if torch.cuda.is_available() else "cpu"),
+            )
+
+            result_row = {
+                "model_name": cfg.model_name,
+                "dataset": dataset_name,
+                "seed": int(cfg.seed),
+                "train_on_dataset": cfg.train_on_dataset,
+                "adapter_path": adapter_path,
+                "probe": "attention",
+                "layer": int(layer),
+                "layers_plus": int(num_add),
+                "roc_auc": float(auc),
+                "lr": float(cfg.probes.attention.lr),
+                "epochs": int(cfg.probes.attention.epochs),
+                "batch_size": int(cfg.probes.batch_size),
+            }
+            os.makedirs(cfg.save_dir, exist_ok=True)
+            csv_path = os.path.join(cfg.save_dir, "probes_rocauc.csv")
+            pd.DataFrame([result_row]).to_csv(
+                csv_path, mode="a", header=not os.path.exists(csv_path), index=False
+            )
+
+            with torch.no_grad():
+                probe_cpu = probe.to(device="cpu").eval()
+                attention_scores = (
+                    probe_cpu(
+                        te_H.to(dtype=torch.float32),
+                        te_length.to(dtype=torch.float32),
+                    ).detach().cpu()
+                )
+
+            results['prediction']['targets'] = te_y
+            results['prediction']['logits'] = te_logits
+            results['prediction'][f'attention_pooling_layer_{layer}_num_add_layers_{num_add}_prediction'] = attention_scores
+    return results
+
+
+def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_loader, pooling_cfg, adapter_path, dataset_name, cfg):
+    results = {}
+    results['prediction'] = {}
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    for layer in cfg.probes.layers:
+        tr_X, tr_y, tr_logits, tr_length = extract_cls_features(model, train_loader, pooling_cfg, layer, device)
+        va_X, va_y, va_logits, va_length = extract_cls_features(model, val_loader, pooling_cfg, layer, device)
+
+        errors_tr = (tr_logits.argmax(dim=1) != tr_y).float()
+        errors_va = (va_logits.argmax(dim=1) != va_y).float()
+
+        probe = LinearProbe(tr_X.shape[-1])
+        probe = train_probe_lightning(
+            probe,
+            tr_X,
+            errors_tr,
+            tr_length,
+
+            va_X,
+            errors_va,
+            va_length,
+
+            lr=cfg.probes.linear.lr,
+            epochs=cfg.probes.linear.epochs,
+            batch_size=cfg.probes.batch_size,
+            log_params={
+                'layer': layer,
+                'lr': cfg.probes.linear.lr,
+                'dataset': cfg.data.name,
+                'type': 'linear_probe'
+            },
+
+        )
+
+        save_dir = _build_probe_save_dir(
+            project_root, cfg.model_name, dataset_name, cfg.seed, "linear", layer
+        )
+        metadata = {
+            "probe": "linear",
+            "layer": int(layer),
+            "model_name": cfg.model_name,
+            "dataset": dataset_name,
+            "seed": int(cfg.seed),
+            "train_on_dataset": cfg.train_on_dataset,
+            "adapter_path": adapter_path,
+            "hyperparams": {
+                "lr": float(cfg.probes.linear.lr),
+                "epochs": int(cfg.probes.linear.epochs),
+                "batch_size": int(cfg.probes.batch_size),
+            },
+        }
+        save_probe_model(probe, save_dir, metadata)
+
+        te_X, te_y, te_logits, te_length = extract_cls_features(model, test_loader, pooling_cfg, layer, device)
+        errors_te = (te_logits.argmax(dim=1) != te_y).float()
+        auc, _, _, _ = evaluate_probe(
+            probe,
+            te_X,
+            errors_te,
+            te_length,
+            device=("cuda" if torch.cuda.is_available() else "cpu"),
+        )
+
+        # current_state = {
+        #     'model': model.config._name_or_path,
+        #     'adapter': adapter_name,
+        #     'dataset': dataset_name,
+        #     'train_on_dataset': cfg.train_on_dataset,
+        #     'normalization': cfg.normalization,
+        #     'seed': cfg.seed,
+
+        os.makedirs(cfg.save_dir, exist_ok=True)
+
+        with torch.no_grad():
+            probe_cpu = probe.to(device="cpu").eval()
+            linear_scores = probe_cpu(te_X.to(dtype=torch.float32), te_length).detach().cpu()
+
+        results['prediction']['targets'] = te_y
+        results['prediction']['logits'] = te_logits
+        results['prediction'][f'linear_prob_layer_{layer}_prediction'] = linear_scores
+    return results
 
 
 def run(cfg: DictConfig):
@@ -184,192 +384,41 @@ def run(cfg: DictConfig):
         shuffle=False,
         pin_memory=True,
     )
+    # model, train_loader, val_loader, test_loader, adapter_path, dataset_name, cfg
+    linear_results = search_hyperparameters_linear_probe(
+        model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
+    )
 
-    for layer in cfg.probes.layers:
-        tr_X, tr_y, tr_logits = extract_cls_features(model, train_loader, layer, device)
-        va_X, va_y, va_logits = extract_cls_features(model, val_loader, layer, device)
-
-        errors_tr = (tr_logits.argmax(dim=1) != tr_y).float()
-        errors_va = (va_logits.argmax(dim=1) != va_y).float()
-
-        probe = LinearProbe(tr_X.shape[-1])
-        probe = train_probe_lightning(
-            probe,
-            tr_X,
-            errors_tr,
-            va_X,
-            errors_va,
-            lr=cfg.probes.linear.lr,
-            epochs=cfg.probes.linear.epochs,
-            batch_size=cfg.probes.batch_size,
-            accelerator=("gpu" if torch.cuda.is_available() else "cpu"),
+    attention_pooling_results = {}
+    try:
+        attention_pooling_results = search_hyperparameters_attention_pooling(
+            model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
         )
+    except Exception as e:
+        print(e)
 
-        save_dir = _build_probe_save_dir(
-            project_root, cfg.model_name, dataset_name, cfg.seed, "linear", layer
-        )
-        metadata = {
-            "probe": "linear",
-            "layer": int(layer),
-            "model_name": cfg.model_name,
-            "dataset": dataset_name,
-            "seed": int(cfg.seed),
-            "train_on_dataset": cfg.train_on_dataset,
-            "adapter_path": adapter_path,
-            "hyperparams": {
-                "lr": float(cfg.probes.linear.lr),
-                "epochs": int(cfg.probes.linear.epochs),
-                "batch_size": int(cfg.probes.batch_size),
-            },
+
+    metric_df = {
+        "model_name": cfg.model_name,
+        "dataset": dataset_name,
+        "seed": int(cfg.seed),
+        "train_on_dataset": cfg.train_on_dataset,
+        "adapter_path": adapter_path,
+    }
+    total_results = {
+        'metric_df': metric_df,
+        'prediction': {
+            **linear_results['prediction'],
+            **attention_pooling_results['prediction']
         }
-        save_probe_model(probe, save_dir, metadata)
+    }
 
-        te_X, te_y, te_logits = extract_cls_features(model, test_loader, layer, device)
-        errors_te = (te_logits.argmax(dim=1) != te_y).float()
-        auc, _, _, _ = evaluate_probe(
-            probe,
-            te_X,
-            errors_te,
-            device=("cuda" if torch.cuda.is_available() else "cpu"),
-        )
-
-        result_row = {
-            "model_name": cfg.model_name,
-            "dataset": dataset_name,
-            "seed": int(cfg.seed),
-            "train_on_dataset": cfg.train_on_dataset,
-            "adapter_path": adapter_path,
-            "probe": "linear",
-            "layer": int(layer),
-            "layers_plus": None,
-            "roc_auc": float(auc),
-            "lr": float(cfg.probes.linear.lr),
-            "epochs": int(cfg.probes.linear.epochs),
-            "batch_size": int(cfg.probes.batch_size),
-        }
-        os.makedirs(cfg.save_dir, exist_ok=True)
-        csv_path = os.path.join(cfg.save_dir, "probes_rocauc.csv")
-        pd.DataFrame([result_row]).to_csv(
-            csv_path, mode="a", header=not os.path.exists(csv_path), index=False
-        )
-
-        with torch.no_grad():
-            probe_cpu = probe.to(device="cpu").eval()
-            linear_scores = probe_cpu(te_X.to(dtype=torch.float32)).detach().cpu()
-        scores_state = {
-            "prediction": {
-                "targets": te_y,
-                "logits": te_logits,
-                "linear_probe": linear_scores,
-            }
-        }
-        scores_path = os.path.join(
-            cfg.save_dir,
-            f"{cfg.model_name}_{dataset_name}_seed_{cfg.seed}_{cfg.train_on_dataset}_linear_layer_{layer}_scores.pkl",
-        )
-        with open(scores_path, "wb") as f:
-            pickle.dump(scores_state, f)
-
-    for layer in cfg.probes.layers:
-        for num_add in cfg.probes.attention.num_layers_add:
-            tr_H, tr_y, tr_logits = extract_token_hidden_states(
-                model, train_loader, layer, num_add, cfg.data.max_length, device
-            )
-            va_H, va_y, va_logits = extract_token_hidden_states(
-                model, val_loader, layer, num_add, cfg.data.max_length, device
-            )
-
-            errors_tr = (tr_logits.argmax(dim=1) != tr_y).float()
-            errors_va = (va_logits.argmax(dim=1) != va_y).float()
-
-            probe = AttentionProbe(tr_H.shape[-1])
-            probe = train_probe_lightning(
-                probe,
-                tr_H,
-                errors_tr,
-                va_H,
-                errors_va,
-                lr=cfg.probes.attention.lr,
-                epochs=cfg.probes.attention.epochs,
-                batch_size=cfg.probes.batch_size,
-                accelerator=("gpu" if torch.cuda.is_available() else "cpu"),
-            )
-
-            save_dir = _build_probe_save_dir(
-                project_root,
-                cfg.model_name,
-                dataset_name,
-                cfg.seed,
-                "attention",
-                layer,
-                layers_plus=num_add,
-            )
-            metadata = {
-                "probe": "attention",
-                "layer": int(layer),
-                "layers_plus": int(num_add),
-                "model_name": cfg.model_name,
-                "dataset": dataset_name,
-                "seed": int(cfg.seed),
-                "train_on_dataset": cfg.train_on_dataset,
-                "adapter_path": adapter_path,
-                "hyperparams": {
-                    "lr": float(cfg.probes.attention.lr),
-                    "epochs": int(cfg.probes.attention.epochs),
-                    "batch_size": int(cfg.probes.batch_size),
-                },
-            }
-            save_probe_model(probe, save_dir, metadata)
-
-            te_H, te_y, te_logits = extract_token_hidden_states(
-                model, test_loader, layer, num_add, cfg.data.max_length, device
-            )
-            errors_te = (te_logits.argmax(dim=1) != te_y).float()
-            auc, _, _, _ = evaluate_probe(
-                probe,
-                te_H,
-                errors_te,
-                device=("cuda" if torch.cuda.is_available() else "cpu"),
-            )
-
-            result_row = {
-                "model_name": cfg.model_name,
-                "dataset": dataset_name,
-                "seed": int(cfg.seed),
-                "train_on_dataset": cfg.train_on_dataset,
-                "adapter_path": adapter_path,
-                "probe": "attention",
-                "layer": int(layer),
-                "layers_plus": int(num_add),
-                "roc_auc": float(auc),
-                "lr": float(cfg.probes.attention.lr),
-                "epochs": int(cfg.probes.attention.epochs),
-                "batch_size": int(cfg.probes.batch_size),
-            }
-            os.makedirs(cfg.save_dir, exist_ok=True)
-            csv_path = os.path.join(cfg.save_dir, "probes_rocauc.csv")
-            pd.DataFrame([result_row]).to_csv(
-                csv_path, mode="a", header=not os.path.exists(csv_path), index=False
-            )
-
-            with torch.no_grad():
-                probe_cpu = probe.to(device="cpu").eval()
-                attention_scores = (
-                    probe_cpu(te_H.to(dtype=torch.float32)).detach().cpu()
-                )
-            scores_state = {
-                "prediction": {
-                    "targets": te_y,
-                    "logits": te_logits,
-                    "attention_probe": attention_scores,
-                }
-            }
-            scores_path = os.path.join(
-                cfg.save_dir,
-                f"{cfg.model_name}_{dataset_name}_seed_{cfg.seed}_{cfg.train_on_dataset}_attention_layer_{layer}_plus_{num_add}_scores.pkl",
-            )
-            with open(scores_path, "wb") as f:
-                pickle.dump(scores_state, f)
+    scores_path = os.path.join(
+        cfg.save_dir,
+        f"{cfg.model_name}_{dataset_name}_seed_{cfg.seed}_{cfg.train_on_dataset}_prob_baselines.pkl",
+    )
+    with open(scores_path, "wb") as f:
+        pickle.dump(total_results, f)
 
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="train_probes.yaml")
