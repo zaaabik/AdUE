@@ -45,7 +45,6 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
         labels.append(batch["labels"].cpu())
         logits.append(out.logits.cpu())
         length.append(batch['attention_mask'].sum(axis=1))
-        break
     return torch.cat(features), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
@@ -78,7 +77,6 @@ def extract_token_hidden_states(
         hs_list.append(padded.cpu())
         labels.append(batch["labels"].cpu())
         logits.append(out.logits.cpu())
-        break
     return torch.cat(hs_list), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
