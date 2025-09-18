@@ -1,4 +1,5 @@
 import os
+import gc
 import pickle
 import random
 
@@ -45,6 +46,8 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
         labels.append(batch["labels"].cpu())
         logits.append(out.logits.cpu())
         length.append(batch['attention_mask'].sum(axis=1))
+        del out, cls
+        gc.collect()
     return torch.cat(features), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
@@ -77,6 +80,8 @@ def extract_token_hidden_states(
         hs_list.append(padded.cpu())
         labels.append(batch["labels"].cpu())
         logits.append(out.logits.cpu())
+        del out, hs, hs_combined, padded
+        gc.collect()
     return torch.cat(hs_list), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
@@ -207,6 +212,13 @@ def search_hyperparameters_attention_pooling(model, train_loader, val_loader, te
             results['prediction']['targets'] = te_y
             results['prediction']['logits'] = te_logits
             results['prediction'][f'attention_pooling_layer_{layer}_num_add_layers_{num_add}_prediction'] = attention_scores
+            del tr_H, tr_y, tr_logits, tr_length
+            del va_H, va_y, va_logits, va_length
+            del te_H, te_y, te_logits, te_length
+            del probe, probe_cpu, attention_scores
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
     return results
 
 
@@ -283,6 +295,25 @@ def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_lo
 
         os.makedirs(cfg.save_dir, exist_ok=True)
 
+        result_row = {
+            "model_name": cfg.model_name,
+            "dataset": dataset_name,
+            "seed": int(cfg.seed),
+            "train_on_dataset": cfg.train_on_dataset,
+            "adapter_path": adapter_path,
+            "probe": "linear",
+            "layer": int(layer),
+            "layers_plus": 0,
+            "roc_auc": float(auc),
+            "lr": float(cfg.probes.linear.lr),
+            "epochs": int(cfg.probes.linear.epochs),
+            "batch_size": int(cfg.probes.batch_size),
+        }
+        csv_path = os.path.join(cfg.save_dir, "probes_rocauc.csv")
+        pd.DataFrame([result_row]).to_csv(
+            csv_path, mode="a", header=not os.path.exists(csv_path), index=False
+        )
+
         with torch.no_grad():
             probe_cpu = probe.to(device="cpu").eval()
             linear_scores = probe_cpu(te_X.to(dtype=torch.float32), te_length).detach().cpu()
@@ -290,6 +321,13 @@ def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_lo
         results['prediction']['targets'] = te_y
         results['prediction']['logits'] = te_logits
         results['prediction'][f'linear_prob_layer_{layer}_prediction'] = linear_scores
+        del tr_X, tr_y, tr_logits, tr_length
+        del va_X, va_y, va_logits, va_length
+        del te_X, te_y, te_logits, te_length
+        del probe, probe_cpu, linear_scores
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     return results
 
 
@@ -417,6 +455,16 @@ def run(cfg: DictConfig):
     )
     with open(scores_path, "wb") as f:
         pickle.dump(total_results, f)
+
+    try:
+        del linear_results, attention_pooling_results, total_results
+        del train_loader, val_loader, test_loader
+        del dataset, tokenizer, model
+    except Exception:
+        pass
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 @hydra.main(version_base="1.3", config_path="configs", config_name="train_probes.yaml")
