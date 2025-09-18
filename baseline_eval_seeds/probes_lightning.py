@@ -185,6 +185,15 @@ def train_probe_lightning(
     best_path = trainer.checkpoint_callback.best_model_path
     print(best_path)
     best_model = ProbeLightningModule.load_from_checkpoint(best_path)
+    try:
+        trainer.logger_connector = None
+    except Exception:
+        pass
+    del trainer, train_dl, val_dl
+    import gc, torch
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     return best_model.probe
 
