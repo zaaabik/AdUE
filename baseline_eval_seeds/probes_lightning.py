@@ -64,8 +64,8 @@ class AttentionProbe(nn.Module):
 
     def forward(self, x, length):
         mask = self.create_binary_mask(length, x.shape[1])
-        attention_mask = torch.zeros((x.shape[0], x.shape[1]))
-        attention_mask = torch.masked_fill(attention_mask, mask, float('-inf'))
+        attention_mask = torch.zeros((x.shape[0], x.shape[1]), device=x.device, dtype=x.dtype)
+        attention_mask = torch.masked_fill(attention_mask, mask.to(device=x.device), float('-inf'))
 
         q_T_h = self.q(x)[:, :, 0]
         attention = torch.softmax(q_T_h + attention_mask, dim=-1)
