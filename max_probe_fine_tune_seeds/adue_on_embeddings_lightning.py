@@ -50,6 +50,10 @@ def train(cfg):
     with open(os.path.join(current_output_dir, 'best_run.pickle'), 'wb') as f:
         pickle.dump(best_run, f)
 
+    best_run['metric_df'].to_csv(
+        os.path.join(current_output_dir, 'best_run_metric_df.csv')
+    )
+
     with open(os.path.join(current_output_dir, 'all_runs.pickle'), 'wb') as f:
         pickle.dump(all_runs, f)
 
