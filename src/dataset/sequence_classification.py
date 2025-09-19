@@ -367,7 +367,7 @@ class TruthfulQA(BaseDataset):
             data = load_dataset(f'zaaabik/truthfulqa_{self.n_shot}_shot')
         train_data = data['train']
         length = [len(i['choices']) for i in train_data]
-        return train_data[np.argmax(length)]['choices']
+        return train_data[int(np.argmax(length))]['choices']
 
     def load(self) -> DatasetDict:
         """Load dataset, preprocess and return train test split."""
