@@ -531,9 +531,15 @@ def train(cfg):
         train_original_target = map_tensor_values(train_original_target, dict(mapping))
         val_original_target = map_tensor_values(val_original_target, dict(mapping))
         test_original_targets = map_tensor_values(test_original_targets, dict(mapping))
-        print('Train acc', (train_original_target == train_logits.argmax(dim=-1)).float().mean())
-        print('Val acc', (val_original_target == val_logits.argmax(dim=-1)).float().mean())
-        print('Test acc', (test_original_targets == test_logits.argmax(dim=-1)).float().mean())
+        print(
+            'Unique: ', torch.unique(
+                train_logits.argmax(dim=-1),
+                return_counts=True
+            )
+        )
+        print('Train acc: ', (train_original_target == train_logits.argmax(dim=-1)).float().mean())
+        print('Val acc: ', (val_original_target == val_logits.argmax(dim=-1)).float().mean())
+        print('Test acc: ', (test_original_targets == test_logits.argmax(dim=-1)).float().mean())
 
 
 
