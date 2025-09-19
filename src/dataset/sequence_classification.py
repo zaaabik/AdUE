@@ -375,6 +375,6 @@ class TruthfulQA(BaseDataset):
             data = load_dataset(f'zaaabik/truthfulqa_{self.n_shot}_shot_debug')
         else:
             data = load_dataset(f'zaaabik/truthfulqa_{self.n_shot}_shot')
-        data = data.rename_column('gold', 'label')
+        data = data.rename_column('correct_idx', 'label')
         data = data.select_columns(['label', 'text'])
         return data
