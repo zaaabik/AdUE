@@ -33,4 +33,4 @@ probes:
   attention:
     lr: 3e-4
     epochs: 10
-    num_layers_add: [0, 1, 2]
+    num_layers_add: [0]
