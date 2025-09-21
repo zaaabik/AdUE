@@ -446,7 +446,7 @@ def run(cfg: DictConfig):
         train_split = train_split.map(lambda x: {
             'label': mapping.get(x['label'], x['label'])
         }, batched=False)
-        print(train_split['text'][:2])
+        print(train_split['input_ids'][:2])
         print('after', train_split['label'])
         val_split = val_split.map(lambda x: {
             'label': mapping.get(x['label'], x['label'])
@@ -454,6 +454,7 @@ def run(cfg: DictConfig):
         test_split = test_split.map(lambda x: {
             'label': mapping.get(x['label'], x['label'])
         }, batched=False)
+        print('Test: ', test_split['input_ids'][:2])
 
 
 
