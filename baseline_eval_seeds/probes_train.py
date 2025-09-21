@@ -334,7 +334,6 @@ def run(cfg: DictConfig):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     base_dataset = hydra.utils.instantiate(cfg.data.dataset)
 
-    # dataset = hydra.utils.instantiate(cfg.data.dataset)
     dataset_name = base_dataset.name()
     num_classes = base_dataset.num_classes()
     dataset = base_dataset.load()
@@ -407,7 +406,7 @@ def run(cfg: DictConfig):
     )
 
     if cfg.get('map_targets', False):
-        choices = dataset.get_choices()
+        choices = base_dataset.get_choices()
         if cfg.get('add_space', None):
             mapping = dict([
                 (idx, tokenizer(' ' + choice, add_special_tokens=False)['input_ids'][0]) for choice, idx in zip(choices, range(512))
