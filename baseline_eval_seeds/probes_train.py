@@ -40,6 +40,7 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
     for batch in tqdm(dataloader, desc=f"Extract CLS L{layer_num}"):
         batch = {k: v.to(device) for k, v in batch.items()}
         fwd_labels = batch["labels"]
+        print(fwd_labels)
         del batch["labels"]
 
         out = model(**batch, output_hidden_states=True)
@@ -403,6 +404,13 @@ def run(cfg: DictConfig):
     collate_fn = transformers.DataCollatorWithPadding(
         return_tensors="pt", padding="longest", tokenizer=tokenizer
     )
+
+    # if cfg.get('map_targets', False):
+    #     train_split = train_split.map()
+    #     val_split = val_split.map()
+    #     test_split = test_split.map()
+    #     print(train_split['label'])
+
     train_loader = DataLoader(
         train_split,
         batch_size=cfg.data.llm_batch_size,
