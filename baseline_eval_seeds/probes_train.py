@@ -39,10 +39,7 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
     pooling = hydra.utils.instantiate(pooling_cfg, layer_number=layer_num)
     for batch in tqdm(dataloader, desc=f"Extract CLS L{layer_num}"):
         batch = {k: v.to(device) for k, v in batch.items()}
-        try:
-            del batch["labels"]
-        except:
-            pass
+        # del batch["labels"]
         out = model(**batch, output_hidden_states=True)
         cls = pooling(out.hidden_states, batch['input_ids'], model)
         features.append(cls.cpu())
