@@ -405,11 +405,23 @@ def run(cfg: DictConfig):
         return_tensors="pt", padding="longest", tokenizer=tokenizer
     )
 
-    # if cfg.get('map_targets', False):
-    #     train_split = train_split.map()
-    #     val_split = val_split.map()
-    #     test_split = test_split.map()
-    #     print(train_split['label'])
+    if cfg.get('map_targets', False):
+        choices = dataset.get_choices()
+        if cfg.get('add_space', None):
+            mapping = dict([
+                (idx, tokenizer(' ' + choice, add_special_tokens=False)['input_ids'][0]) for choice, idx in zip(choices, range(512))
+            ])
+        else:
+            mapping = dict([
+                (idx, tokenizer(choice, add_special_tokens=False)['input_ids'][0]) for choice, idx in zip(choices, range(512))
+            ])
+        print('before', train_split['label'])
+        train_split = train_split.map(lambda x: mapping.get(x['label'], x['label']), batched=False)
+        print('after', train_split['label'])
+        val_split = val_split.map(lambda x: mapping.get(x['label'], x['label']), batched=False)
+        test_split = test_split.map(lambda x: mapping.get(x['label'], x['label']), batched=False)
+
+
 
     train_loader = DataLoader(
         train_split,
