@@ -21,7 +21,7 @@ model:
 adapter:
   path: ${oc.env:PROJECT_ROOT}/data/models/${model_name}_runs_seeds/${data.name}/${seed}/
 
-save_dir: ${oc.env:PROJECT_ROOT}/baseline_eval_seeds/results/probes/${lr}/${model_name}_probes_ds_${train_on_dataset}
+save_dir: ${oc.env:PROJECT_ROOT}/baseline_eval_seeds/results/probes/lr_${lr}/${model_name}_probes_ds_${train_on_dataset}
 train_on_dataset: train
 lr: 3e-5
 probes:
