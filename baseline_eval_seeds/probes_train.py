@@ -252,6 +252,13 @@ def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_lo
     device = "cuda" if torch.cuda.is_available() else "cpu"
     for layer in cfg.probes.layers:
         tr_X, tr_y, tr_logits, tr_length = extract_cls_features(model, train_loader, pooling_cfg, layer, device)
+        print('ACC:', (tr_logits.argmax(dim=-1) == tr_y).float().mean())
+        print(
+            'Unique: ', torch.unique(
+                tr_logits.argmax(dim=-1),
+                return_counts=True
+            )
+        )
         va_X, va_y, va_logits, va_length = extract_cls_features(model, val_loader, pooling_cfg, layer, device)
 
         errors_tr = (tr_logits.argmax(dim=1) != tr_y).float()
