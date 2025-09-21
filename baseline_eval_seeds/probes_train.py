@@ -75,9 +75,9 @@ def extract_token_hidden_states(
     hs_list, labels, logits, length = [], [], [], []
     for batch in tqdm(dataloader, desc=f"Extract HS L{layer_num} +{num_layers_add}"):
         batch = {k: v.to(device) for k, v in batch.items()}
-        out = model(**batch, output_hidden_states=True)
         fwd_labels = batch["labels"]
         del batch["labels"]
+        out = model(**batch, output_hidden_states=True)
         total_layers = len(out.hidden_states)
         if layer_num < 0:
             base_idx = total_layers + layer_num
