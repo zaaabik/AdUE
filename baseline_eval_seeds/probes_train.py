@@ -143,6 +143,21 @@ def search_hyperparameters_attention_pooling(model, train_loader, val_loader, te
             tr_H, tr_y, tr_logits, tr_length = extract_token_hidden_states(
                 model, train_loader, layer, num_add, cfg.data.max_length, device
             )
+            print('Attention pooling')
+            print('ACC:', (tr_logits.argmax(dim=-1) == tr_y).float().mean())
+            print(
+                'Unique: ', torch.unique(
+                    tr_logits.argmax(dim=-1),
+                    return_counts=True
+                )
+            )
+            print(
+                'Unique tgt: ', torch.unique(
+                    tr_y,
+                    return_counts=True
+                )
+            )
+
             va_H, va_y, va_logits, va_length = extract_token_hidden_states(
                 model, val_loader, layer, num_add, cfg.data.max_length, device
             )
