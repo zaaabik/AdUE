@@ -332,11 +332,12 @@ def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_lo
 def run(cfg: DictConfig):
     L.seed_everything(cfg.seed, workers=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    base_dataset = hydra.utils.instantiate(cfg.data.dataset)
 
-    dataset = hydra.utils.instantiate(cfg.data.dataset)
-    dataset_name = dataset.name()
-    num_classes = dataset.num_classes()
-    dataset = dataset.load()
+    # dataset = hydra.utils.instantiate(cfg.data.dataset)
+    dataset_name = base_dataset.name()
+    num_classes = base_dataset.num_classes()
+    dataset = base_dataset.load()
     cfg.model.num_labels = num_classes
     os.makedirs(cfg.save_dir, exist_ok=True)
 
