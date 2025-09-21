@@ -305,11 +305,21 @@ def run(cfg: DictConfig):
     os.makedirs(cfg.save_dir, exist_ok=True)
 
     adapter_path = cfg.adapter.path
-    model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
-        adapter_path, **hydra.utils.instantiate(cfg.model)
-    )
-    adapter_name = model.peft_config["default"].__class__.__name__
-    model = model.eval().merge_and_unload().to(device)
+    if cfg.get('base_model', False):
+        del cfg.model.num_labels
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            adapter_path,
+            **hydra.utils.instantiate(cfg.model)
+        )
+        adapter_name = 'base_full'
+        tokenizer = transformers.AutoTokenizer.from_pretrained(adapter_path)
+        model = model.eval().to(device)
+    else:
+        model = peft.AutoPeftModelForSequenceClassification.from_pretrained(
+            adapter_path, **hydra.utils.instantiate(cfg.model)
+        )
+        adapter_name = model.peft_config["default"].__class__.__name__
+        model = model.eval().merge_and_unload().to(device)
 
     if model.config.pad_token_id is None:
         model.config.pad_token_id = model.config.eos_token_id
