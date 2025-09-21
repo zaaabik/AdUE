@@ -44,9 +44,24 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
 
         out = model(**batch, output_hidden_states=True)
         cls = pooling(out.hidden_states, batch['input_ids'], model)
+
+        if len(out.logits.shape) == 2:
+            logits.append(out.logits.cpu())
+        elif len(out.logits.shape) == 3:
+            hs = out.logits
+            bs = out.logits.shape[0]
+
+            non_pad_mask = (batch['input_ids'] != model.config.pad_token_id).to(
+                device=out.logits.device, dtype=torch.int32)
+            token_indices = torch.arange(batch['input_ids'].shape[-1], device=hs.device, dtype=torch.int32)
+            last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)
+
+            pooled_logits = hs[torch.arange(bs, device=hs.device), last_non_pad_token]
+            logits.append(pooled_logits.cpu())
+
         features.append(cls.cpu())
         labels.append(fwd_labels.cpu())
-        logits.append(out.logits.cpu())
+        # logits.append(out.logits.cpu())
         length.append(batch['attention_mask'].sum(axis=1))
     return torch.cat(features), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
@@ -79,9 +94,24 @@ def extract_token_hidden_states(
             device=hs_combined.device,
         )
         padded[:, : hs_combined.size(1), :] = hs_combined
+
+        if len(out.logits.shape) == 2:
+            logits.append(out.logits.cpu())
+        elif len(out.logits.shape) == 3:
+            hs = out.logits
+            bs = out.logits.shape[0]
+
+            non_pad_mask = (batch['input_ids'] != model.config.pad_token_id).to(
+                device=out.logits.device, dtype=torch.int32)
+            token_indices = torch.arange(batch['input_ids'].shape[-1], device=hs.device, dtype=torch.int32)
+            last_non_pad_token = (token_indices * non_pad_mask).argmax(-1)
+
+            pooled_logits = hs[torch.arange(bs, device=hs.device), last_non_pad_token]
+            logits.append(pooled_logits.cpu())
+
+
         hs_list.append(padded.cpu())
         labels.append(fwd_labels.cpu())
-        logits.append(out.logits.cpu())
     return torch.cat(hs_list), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
 
