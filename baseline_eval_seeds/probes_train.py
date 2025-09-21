@@ -433,12 +433,9 @@ def run(cfg: DictConfig):
     )
 
     attention_pooling_results = {}
-    try:
-        attention_pooling_results = search_hyperparameters_attention_pooling(
-            model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
-        )
-    except Exception as e:
-        print(e)
+    attention_pooling_results = search_hyperparameters_attention_pooling(
+        model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
+    )
 
 
     metric_df = {
