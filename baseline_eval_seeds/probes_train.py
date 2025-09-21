@@ -39,11 +39,13 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
     pooling = hydra.utils.instantiate(pooling_cfg, layer_number=layer_num)
     for batch in tqdm(dataloader, desc=f"Extract CLS L{layer_num}"):
         batch = {k: v.to(device) for k, v in batch.items()}
-        # del batch["labels"]
+        labels = batch["labels"]
+        del batch["labels"]
+
         out = model(**batch, output_hidden_states=True)
         cls = pooling(out.hidden_states, batch['input_ids'], model)
         features.append(cls.cpu())
-        labels.append(batch["labels"].cpu())
+        labels.append(labels.cpu())
         logits.append(out.logits.cpu())
         length.append(batch['attention_mask'].sum(axis=1))
     return torch.cat(features), torch.cat(labels), torch.cat(logits), torch.cat(length)
@@ -58,6 +60,8 @@ def extract_token_hidden_states(
     for batch in tqdm(dataloader, desc=f"Extract HS L{layer_num} +{num_layers_add}"):
         batch = {k: v.to(device) for k, v in batch.items()}
         out = model(**batch, output_hidden_states=True)
+        labels = batch["labels"]
+        del batch["labels"]
         total_layers = len(out.hidden_states)
         if layer_num < 0:
             base_idx = total_layers + layer_num
@@ -76,7 +80,7 @@ def extract_token_hidden_states(
         )
         padded[:, : hs_combined.size(1), :] = hs_combined
         hs_list.append(padded.cpu())
-        labels.append(batch["labels"].cpu())
+        labels.append(labels.cpu())
         logits.append(out.logits.cpu())
     return torch.cat(hs_list), torch.cat(labels), torch.cat(logits), torch.cat(length)
 
