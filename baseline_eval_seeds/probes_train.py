@@ -40,7 +40,6 @@ def extract_cls_features(model, dataloader, pooling_cfg, layer_num, device):
     for batch in tqdm(dataloader, desc=f"Extract CLS L{layer_num}"):
         batch = {k: v.to(device) for k, v in batch.items()}
         fwd_labels = batch["labels"]
-        print(fwd_labels)
         del batch["labels"]
 
         out = model(**batch, output_hidden_states=True)
@@ -256,6 +255,12 @@ def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_lo
         print(
             'Unique: ', torch.unique(
                 tr_logits.argmax(dim=-1),
+                return_counts=True
+            )
+        )
+        print(
+            'Unique tgt: ', torch.unique(
+                tr_y,
                 return_counts=True
             )
         )
