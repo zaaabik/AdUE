@@ -489,15 +489,15 @@ def run(cfg: DictConfig):
         shuffle=False,
         pin_memory=True,
     )
+    attention_pooling_results = search_hyperparameters_attention_pooling(
+        model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
+    )
+
     # model, train_loader, val_loader, test_loader, adapter_path, dataset_name, cfg
     linear_results = search_hyperparameters_linear_probe(
         model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
     )
 
-    attention_pooling_results = {}
-    attention_pooling_results = search_hyperparameters_attention_pooling(
-        model, train_loader, val_loader, test_loader, cfg.pooling, adapter_path, dataset_name, cfg
-    )
 
 
     metric_df = {
