@@ -180,7 +180,7 @@ def search_hyperparameters_attention_pooling(model, train_loader, val_loader, te
                 accelerator=("gpu" if torch.cuda.is_available() else "cpu"),
                 log_params={
                     'layer': layer,
-                    'lr': cfg.probes.linear.lr,
+                    'lr': cfg.probes.attention.lr,
                     'dataset': cfg.data.name,
                     'type': 'attention',
                     'num_add': num_add,
