@@ -170,7 +170,6 @@ def train_probe_lightning(
     ]
 
     trainer = L.Trainer(
-        accelerator='gpu',
         max_epochs=epochs,
         num_sanity_val_steps=0,
         callbacks=callbacks,
