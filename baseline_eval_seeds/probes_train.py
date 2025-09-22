@@ -336,13 +336,24 @@ def search_hyperparameters_linear_probe(model, train_loader, val_loader, test_lo
             device=("cuda" if torch.cuda.is_available() else "cpu"),
         )
 
-        # current_state = {
-        #     'model': model.config._name_or_path,
-        #     'adapter': adapter_name,
-        #     'dataset': dataset_name,
-        #     'train_on_dataset': cfg.train_on_dataset,
-        #     'normalization': cfg.normalization,
-        #     'seed': cfg.seed,
+        result_row = {
+            "model_name": cfg.model_name,
+            "dataset": dataset_name,
+            "seed": int(cfg.seed),
+            "train_on_dataset": cfg.train_on_dataset,
+            "adapter_path": adapter_path,
+            "probe": "linear",
+            "layer": int(layer),
+            "roc_auc": float(auc),
+            "lr": float(cfg.probes.attention.lr),
+            "epochs": int(cfg.probes.attention.epochs),
+            "batch_size": int(cfg.probes.batch_size),
+        }
+        os.makedirs(cfg.save_dir, exist_ok=True)
+        csv_path = os.path.join(cfg.save_dir, "probes_rocauc.csv")
+        pd.DataFrame([result_row]).to_csv(
+            csv_path, mode="a", header=not os.path.exists(csv_path), index=False
+        )
 
         os.makedirs(cfg.save_dir, exist_ok=True)
 
@@ -442,19 +453,15 @@ def run(cfg: DictConfig):
             mapping = dict([
                 (idx, tokenizer(choice, add_special_tokens=False)['input_ids'][0]) for choice, idx in zip(choices, range(512))
             ])
-        # print('before', train_split['label'])
         train_split = train_split.map(lambda x: {
             'label': mapping.get(x['label'], x['label'])
         }, batched=False)
-        # print(train_split['input_ids'][:2])
-        # print('after', train_split['label'])
         val_split = val_split.map(lambda x: {
             'label': mapping.get(x['label'], x['label'])
         }, batched=False)
         test_split = test_split.map(lambda x: {
             'label': mapping.get(x['label'], x['label'])
         }, batched=False)
-        # print('Test: ', test_split['input_ids'][:2])
 
 
 
