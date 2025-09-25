@@ -55,12 +55,13 @@ def train(cfg):
     if cfg.grid.get('restricted_classes', False):
         print('Train with restricted classes')
         unique_targets = state['train_original_target'].unique()
-
+        print('Targets before mapping', state['train_original_target'].min(), state['train_original_target'].max())
         print('Test acc', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean().item())
 
         state['train_original_target'] = map_targets(state['train_original_target'], unique_targets)
         state['val_original_targets'] = map_targets(state['val_original_targets'], unique_targets)
         state['test_original_targets'] = map_targets(state['test_original_targets'], unique_targets)
+        print('Targets after mapping', state['train_original_target'].min(), state['train_original_target'].max())
 
         state['train_logits'] = state['train_logits'][:, unique_targets]
         state['val_logits'] = state['val_logits'][:, unique_targets]
