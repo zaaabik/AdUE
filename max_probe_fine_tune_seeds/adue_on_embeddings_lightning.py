@@ -83,7 +83,7 @@ def train(cfg):
         ):
             print(
                 'Test acc after new layer',
-                (new_head(state['test_features']).argmax(dim=-1) == state['test_original_targets']).float().mean()
+                (new_head(state['test_features'].float()).argmax(dim=-1) == state['test_original_targets']).float().mean()
             )
 
     best_run, all_runs = search_hyperparameters_lightning(**state)
