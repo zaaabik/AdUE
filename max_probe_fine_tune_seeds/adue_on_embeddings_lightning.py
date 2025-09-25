@@ -89,6 +89,7 @@ def train(cfg):
                             state['test_features'].float()
                         ).argmax(dim=-1) == state['test_original_targets']).float().mean()
             )
+        return
 
     best_run, all_runs = search_hyperparameters_lightning(**state)
 
