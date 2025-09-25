@@ -73,8 +73,15 @@ def train(cfg):
         new_head.weight.data = original_head.weight.data[unique_targets, :]
         state['original_head'] = new_head
 
-        print('Test acc after mapping',
-              (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
+        print(
+            'Test acc after mapping',
+            (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean()
+        )
+
+        print(
+            'Test acc after new layer',
+            (new_head(state['test_features']).argmax(dim=-1) == state['test_original_targets']).float().mean()
+        )
 
     best_run, all_runs = search_hyperparameters_lightning(**state)
 
