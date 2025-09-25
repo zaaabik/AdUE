@@ -67,11 +67,15 @@ def train(cfg):
         state['test_logits'] = state['test_logits'][:, unique_targets]
 
         print('Min max tgt', min(state['train_original_target']), max(state['train_original_target']))
-        original_head = state['original_head'][unique_targets,:]
+
+        original_head = state['original_head']
+        new_head = torch.nn.Linear(original_head.in_features, len(unique_targets))
+        new_head.weight.data = original_head.weight.data[unique_targets, :]
+        state['original_head'] = new_head
         print('Prev shape', original_head.shape)
 
-        print('Test acc after mapping', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
-
+        print('Test acc after mapping',
+              (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
 
     best_run, all_runs = search_hyperparameters_lightning(**state)
 
