@@ -78,7 +78,7 @@ def train(cfg):
             (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean()
         )
         with torch.autocast(
-                device_type=torch.cpu,
+                device_type='cpu',
                 dtype=torch.float32
         ):
             print(
