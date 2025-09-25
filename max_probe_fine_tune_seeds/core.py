@@ -308,7 +308,7 @@ def train_smooth_head_lightning(
             WeightedRandomSampler object
         """
         # Count samples for each class
-        class_counts = torch.bincount(targets)
+        class_counts = torch.bincount(targets.long())
 
         # Calculate weights for each sample
         class_weights = 1. / class_counts.float()
