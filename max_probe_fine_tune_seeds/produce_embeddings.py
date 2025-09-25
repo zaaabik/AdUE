@@ -537,9 +537,9 @@ def train(cfg):
                 return_counts=True
             )
         )
-        print('Train acc: ', (train_original_target == train_logits.argmax(dim=-1)).float().mean())
-        print('Val acc: ', (val_original_target == val_logits.argmax(dim=-1)).float().mean())
-        print('Test acc: ', (test_original_targets == test_logits.argmax(dim=-1)).float().mean())
+    print('Train acc: ', (train_original_target == train_logits.argmax(dim=-1)).float().mean())
+    print('Val acc: ', (val_original_target == val_logits.argmax(dim=-1)).float().mean())
+    print('Test acc: ', (test_original_targets == test_logits.argmax(dim=-1)).float().mean())
 
 
 
