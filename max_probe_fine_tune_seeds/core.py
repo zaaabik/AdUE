@@ -324,14 +324,15 @@ def train_smooth_head_lightning(
         )
 
         return sampler
+
     train_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=smooth_batch_size,
-        shuffle=False,
+        shuffle=True,
         generator=generator,
         num_workers=0,
         pin_memory=False,
-        sampler=create_balanced_sampler(train_errors)
+        # sampler=create_balanced_sampler(train_errors)
     )
 
     val_dataset = torch.utils.data.TensorDataset(val_features, val_errors, val_base_pred)
