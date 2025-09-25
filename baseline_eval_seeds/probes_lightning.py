@@ -174,7 +174,7 @@ def train_probe_lightning(
         num_sanity_val_steps=0,
         callbacks=callbacks,
         enable_progress_bar=True,
-        precision='bf16-mixed',
+        precision='32',
         logger=[
             mlflow_logger
         ],
