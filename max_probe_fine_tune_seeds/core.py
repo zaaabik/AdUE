@@ -314,7 +314,7 @@ def train_smooth_head_lightning(
         class_weights = 1. / class_counts.float()
 
         # Assign weight to each sample based on its class
-        sample_weights = class_weights[targets]
+        sample_weights = class_weights[targets.long()]
 
         # Create sampler
         sampler = WeightedRandomSampler(
