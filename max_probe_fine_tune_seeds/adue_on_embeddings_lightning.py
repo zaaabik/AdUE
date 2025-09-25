@@ -77,7 +77,10 @@ def train(cfg):
             'Test acc after mapping',
             (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean()
         )
-        with torch.autocast(dtype=torch.float32):
+        with torch.autocast(
+                device_type=torch.cpu,
+                dtype=torch.float32
+        ):
             print(
                 'Test acc after new layer',
                 (new_head(state['test_features']).argmax(dim=-1) == state['test_original_targets']).float().mean()
