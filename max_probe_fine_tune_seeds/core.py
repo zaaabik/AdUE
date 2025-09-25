@@ -10,6 +10,7 @@ from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 from transformers.models.electra.modeling_electra import ElectraClassificationHead
 from transformers.models.roberta.modeling_roberta import RobertaClassificationHead
+from torch.utils.data import WeightedRandomSampler
 import lightning as L
 import os
 
@@ -376,13 +377,43 @@ def train_smooth_head(
         smooth_batch_size=batch_size,
 ):
     dataset = torch.utils.data.TensorDataset(train_features, train_errors, train_max_probs)
+
+    def create_balanced_sampler(targets):
+        """
+        Create a WeightedRandomSampler for binary classification imbalance
+
+        Args:
+            targets: torch.Tensor of binary labels (0 and 1)
+
+        Returns:
+            WeightedRandomSampler object
+        """
+        # Count samples for each class
+        class_counts = torch.bincount(targets)
+
+        # Calculate weights for each sample
+        class_weights = 1. / class_counts.float()
+
+        # Assign weight to each sample based on its class
+        sample_weights = class_weights[targets]
+
+        # Create sampler
+        sampler = WeightedRandomSampler(
+            weights=sample_weights,
+            num_samples=len(targets),
+            replacement=True
+        )
+
+        return sampler
+
     train_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=smooth_batch_size,
-        shuffle=True,
+        shuffle=False,
         generator=generator,
         num_workers=0,
         pin_memory=False,
+        sampler=create_balanced_sampler(train_errors),
     )
 
     initial_params = {
