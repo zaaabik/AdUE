@@ -42,6 +42,37 @@ def train(cfg):
     del state['test_max_probs']
     del state['val_max_probs']
 
+    def map_targets(targets, unique_targets):
+        replace_dict = {
+            val: idx for idx, val in enumerate(unique_targets)
+        }
+
+        new_targets = torch.ones_like(targets) * -1
+        for original_value, new_value in replace_dict.items():
+            new_targets[targets == original_value] = new_value
+        return new_targets
+
+    if cfg.grid.get('restricted_classes', False):
+        print('Train with restricted classes')
+        unique_targets = state['train_original_target'].unique()
+
+        print('Test acc', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
+
+        state['train_original_target'] = map_targets(state['train_original_target'], unique_targets)
+        state['val_original_targets'] = map_targets(state['val_original_targets'], unique_targets)
+        state['test_original_targets'] = map_targets(state['test_original_targets'], unique_targets)
+
+        state['train_logits'] = state['train_logits'][:, unique_targets]
+        state['val_logits'] = state['val_logits'][:, unique_targets]
+        state['test_logits'] = state['test_logits'][:, unique_targets]
+
+        print('Min max tgt', min(state['train_original_target']), max(state['train_original_target']))
+        original_head = state['original_head'][unique_targets,:]
+        print('Prev shape', original_head.shape)
+
+        print('Test acc after mapping', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
+
+
     best_run, all_runs = search_hyperparameters_lightning(**state)
 
     current_output_dir = os.path.join(cfg.save_dir)
