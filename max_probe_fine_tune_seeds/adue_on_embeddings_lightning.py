@@ -56,7 +56,7 @@ def train(cfg):
         print('Train with restricted classes')
         unique_targets = state['train_original_target'].unique()
 
-        print('Test acc', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
+        print('Test acc', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean().item())
 
         state['train_original_target'] = map_targets(state['train_original_target'], unique_targets)
         state['val_original_targets'] = map_targets(state['val_original_targets'], unique_targets)
@@ -76,7 +76,7 @@ def train(cfg):
 
         print(
             'Test acc after mapping',
-            (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean()
+            (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean().item()
         )
         with torch.autocast(
                 device_type='cpu',
@@ -87,7 +87,7 @@ def train(cfg):
                 (
                         new_head(
                             state['test_features'].float()
-                        ).argmax(dim=-1) == state['test_original_targets']).float().mean()
+                        ).argmax(dim=-1) == state['test_original_targets']).float().mean().item()
             )
         return
 
