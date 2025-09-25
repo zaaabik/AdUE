@@ -71,6 +71,7 @@ def train(cfg):
         original_head = state['original_head']
         new_head = torch.nn.Linear(original_head.in_features, len(unique_targets))
         new_head.weight.data = original_head.weight.data[unique_targets, :]
+        new_head = new_head.float()
         state['original_head'] = new_head
 
         print(
@@ -83,7 +84,10 @@ def train(cfg):
         ):
             print(
                 'Test acc after new layer',
-                (new_head(state['test_features'].float()).argmax(dim=-1) == state['test_original_targets']).float().mean()
+                (
+                        new_head(
+                            state['test_features'].float()
+                        ).argmax(dim=-1) == state['test_original_targets']).float().mean()
             )
 
     best_run, all_runs = search_hyperparameters_lightning(**state)
