@@ -66,6 +66,7 @@ def train(cfg):
         state['train_logits'] = state['train_logits'][:, unique_targets]
         state['val_logits'] = state['val_logits'][:, unique_targets]
         state['test_logits'] = state['test_logits'][:, unique_targets]
+        assert state['test_logits'].shape[1] == len(unique_targets)
 
         print('Min max tgt', min(state['train_original_target']), max(state['train_original_target']))
 
@@ -83,12 +84,15 @@ def train(cfg):
                 device_type='cpu',
                 dtype=torch.float32
         ):
+            new_head_preds = new_head(
+                            state['test_features'].float()
+                        )
+            assert new_head_preds.shape[1] == len(unique_targets)
             print(
                 'Test acc after new layer',
                 (
-                        new_head(
-                            state['test_features'].float()
-                        ).argmax(dim=-1) == state['test_original_targets']).float().mean().item()
+                    new_head_preds.argmax(dim=-1) == state['test_original_targets']
+                ).float().mean().item()
             )
         return
 
