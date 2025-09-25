@@ -164,7 +164,7 @@ def train_probe_lightning(
     mlflow_logger.log_hyperparams(log_params)
 
     callbacks = [
-        L.pytorch.callbacks.EarlyStopping(monitor="val/auc", mode="max", patience=5),
+        L.pytorch.callbacks.EarlyStopping(monitor="val/auc", mode="max", patience=15),
         L.pytorch.callbacks.ModelCheckpoint(monitor="val/auc", mode="max", save_weights_only=True),
 
     ]
