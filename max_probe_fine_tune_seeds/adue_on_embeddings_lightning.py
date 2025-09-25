@@ -57,6 +57,7 @@ def train(cfg):
         unique_targets = state['train_original_target'].unique()
         print('Targets before mapping', state['train_original_target'].min(), state['train_original_target'].max())
         print('Test acc', (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean().item())
+        assert state['test_logits'].shape[1] != len(unique_targets)
 
         state['train_original_target'] = map_targets(state['train_original_target'], unique_targets)
         state['val_original_targets'] = map_targets(state['val_original_targets'], unique_targets)
@@ -94,7 +95,6 @@ def train(cfg):
                     new_head_preds.argmax(dim=-1) == state['test_original_targets']
                 ).float().mean().item()
             )
-        return
 
     best_run, all_runs = search_hyperparameters_lightning(**state)
 
