@@ -451,7 +451,7 @@ def train_smooth_head(
 
             optimizer.zero_grad()
             outputs = smooth_head(feats.to(dtype=torch.float32))
-
+            print(labs.mean())
             try:
                 loss_main = criterion(outputs.float(), labs)
             except:
