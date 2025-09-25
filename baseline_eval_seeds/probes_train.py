@@ -240,7 +240,7 @@ def search_hyperparameters_attention_pooling(model, train_loader, val_loader, te
                 "batch_size": int(cfg.probes.batch_size),
             }
             os.makedirs(cfg.save_dir, exist_ok=True)
-            csv_path = os.path.join(cfg.save_dir, "probes_rocauc.csv")
+            csv_path = os.path.join(cfg.save_dir, "attention_probes_rocauc.csv")
             pd.DataFrame([result_row]).to_csv(
                 csv_path, mode="a", header=not os.path.exists(csv_path), index=False
             )

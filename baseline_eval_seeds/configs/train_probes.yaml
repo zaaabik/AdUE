@@ -29,8 +29,8 @@ probes:
   batch_size: 64
   linear:
     lr: 3e-4
-    epochs: 10
+    epochs: 50
   attention:
     lr: 3e-4
-    epochs: 10
+    epochs: 50
     num_layers_add: [0]
