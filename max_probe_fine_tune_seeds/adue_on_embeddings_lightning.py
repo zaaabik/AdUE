@@ -72,7 +72,6 @@ def train(cfg):
         new_head = torch.nn.Linear(original_head.in_features, len(unique_targets))
         new_head.weight.data = original_head.weight.data[unique_targets, :]
         state['original_head'] = new_head
-        print('Prev shape', original_head.shape)
 
         print('Test acc after mapping',
               (state['test_logits'].argmax(dim=-1) == state['test_original_targets']).float().mean())
