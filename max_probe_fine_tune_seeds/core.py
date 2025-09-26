@@ -408,7 +408,7 @@ def train_smooth_head_lightning(
 
 
     trainer = L.Trainer(
-        # precision='16-mixed',
+        precision='32-true',
         num_sanity_val_steps=0,
         callbacks=[
             early_stopping_callback,
