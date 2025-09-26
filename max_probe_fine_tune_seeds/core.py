@@ -348,18 +348,8 @@ def train_smooth_head_lightning(
                 g.manual_seed(self._seed)
             perm = torch.randperm(self._balanced_indices.numel(), generator=g)
             yield from self._balanced_indices[perm].tolist()
-    print(cfg.grid)
+
     if cfg.grid.get('balance_classes', False):
-        print('balance_classes turn off')
-        train_loader = torch.utils.data.DataLoader(
-            dataset,
-            batch_size=smooth_batch_size,
-            shuffle=True,
-            generator=generator,
-            num_workers=0,
-            pin_memory=False,
-        )
-    else:
         print('balance_classes turn on')
         train_loader = torch.utils.data.DataLoader(
             dataset,
@@ -369,6 +359,16 @@ def train_smooth_head_lightning(
             num_workers=0,
             pin_memory=False,
             sampler=UpsampleBalancedSampler(train_errors)
+        )
+    else:
+        print('balance_classes turn off')
+        train_loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=smooth_batch_size,
+            shuffle=True,
+            generator=generator,
+            num_workers=0,
+            pin_memory=False,
         )
 
     val_dataset = torch.utils.data.TensorDataset(val_features, val_errors, val_base_pred)
