@@ -350,6 +350,7 @@ def train_smooth_head_lightning(
             yield from self._balanced_indices[perm].tolist()
 
     if cfg.grid.get('balance_classes', False):
+        print('balance_classes turn off')
         train_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=smooth_batch_size,
