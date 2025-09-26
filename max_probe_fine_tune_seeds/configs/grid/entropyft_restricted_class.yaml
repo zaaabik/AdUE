@@ -7,4 +7,5 @@ extract_features_layer_number: [-1]
 load_weights: ['cls_head']
 head_type: ['entropy']
 restricted_classes: true
+balance_classes: true
 name: entropy_response_finetune_restricted_classes
