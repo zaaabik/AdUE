@@ -302,33 +302,53 @@ def train_smooth_head_lightning(
         cfg=None
 ):
     dataset = torch.utils.data.TensorDataset(train_features, train_errors, train_base_pred)
-    def create_balanced_sampler(targets):
+
+    class UpsampleBalancedSampler:
         """
-        Create a WeightedRandomSampler for binary classification imbalance
-
-        Args:
-            targets: torch.Tensor of binary labels (0 and 1)
-
-        Returns:
-            WeightedRandomSampler object
+        Upsamples the minority class to match the majority, then shuffles.
+        targets: 1D torch.Tensor of shape [N] with binary labels {0, 1}.
+        seed: optional int for reproducible shuffling per __iter__ call.
         """
-        # Count samples for each class
-        class_counts = torch.bincount(targets.long())
 
-        # Calculate weights for each sample
-        class_weights = 1. / class_counts.float()
+        def __init__(self, targets: torch.Tensor, seed: int | None = None):
+            if targets.ndim != 1:
+                raise ValueError("targets must be a 1D tensor")
+            uniques = torch.unique(targets)
+            if not torch.all(uniques.isin(torch.tensor([0, 1], dtype=targets.dtype))):
+                raise ValueError("targets must be binary (only 0 and 1)")
+            n0 = int((targets == 0).sum().item())
+            n1 = int((targets == 1).sum().item())
+            if n0 == 0 or n1 == 0:
+                raise ValueError("Both classes must be present to balance by upsampling")
 
-        # Assign weight to each sample based on its class
-        sample_weights = class_weights[targets.long()]
+            idx0 = torch.nonzero(targets == 0, as_tuple=False).squeeze(1)
+            idx1 = torch.nonzero(targets == 1, as_tuple=False).squeeze(1)
 
-        # Create sampler
-        sampler = WeightedRandomSampler(
-            weights=sample_weights,
-            num_samples=len(targets),
-            replacement=True
-        )
+            n = max(n0, n1)  # upsample both to this size for symmetry
 
-        return sampler
+            def upsample(idx: torch.Tensor, target_len: int) -> torch.Tensor:
+                # repeat and truncate to reach the target length
+                reps = (target_len + idx.numel() - 1) // idx.numel()
+                tiled = idx.repeat(reps)
+                return tiled[:target_len]
+
+            up0 = upsample(idx0, n)
+            up1 = upsample(idx1, n)
+
+            # concatenated balanced pool: size = 2 * max(n0, n1)
+            self._balanced_indices = torch.cat([up0, up1], dim=0)
+            self._seed = seed
+
+        def __len__(self) -> int:
+            return self._balanced_indices.numel()
+
+        def __iter__(self):
+            g = torch.Generator()
+            if self._seed is not None:
+                g.manual_seed(self._seed)
+            perm = torch.randperm(self._balanced_indices.numel(), generator=g)
+            yield from self._balanced_indices[perm].tolist()
+
     if cfg.grid.get('balance_classes', False):
         train_loader = torch.utils.data.DataLoader(
             dataset,
@@ -346,7 +366,7 @@ def train_smooth_head_lightning(
             generator=generator,
             num_workers=0,
             pin_memory=False,
-            sampler=create_balanced_sampler(train_errors)
+            sampler=UpsampleBalancedSampler(train_errors)
         )
 
     val_dataset = torch.utils.data.TensorDataset(val_features, val_errors, val_base_pred)
