@@ -111,7 +111,7 @@ def evaluate_smooth_head(smooth_head, val_features, val_labels, device):
     all_labels = []
 
     with torch.no_grad():
-        feats = val_features.to(device, dtype=torch.float32)
+        feats = val_features.to(device, dtype=torch.float64)
         smooth_val = smooth_head(feats)
         all_preds.extend(smooth_val.float().cpu().numpy().tolist())
         all_labels.extend(val_labels.cpu().numpy().tolist())
