@@ -348,7 +348,7 @@ def train_smooth_head_lightning(
                 g.manual_seed(self._seed)
             perm = torch.randperm(self._balanced_indices.numel(), generator=g)
             yield from self._balanced_indices[perm].tolist()
-
+    print(cfg.grid)
     if cfg.grid.get('balance_classes', False):
         print('balance_classes turn off')
         train_loader = torch.utils.data.DataLoader(
