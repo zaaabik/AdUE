@@ -1,5 +1,3 @@
-export PROJECT_ROOT=/Users/HawkA/Desktop/jupyter
-
 CUDA_VISIBLE_DEVICES=0 python baseline_eval_seeds/probes_train.py -m \
   experiment=qwen train_on_dataset=train probes.layers=[-1, -7, -14, -21] \
   data.name=CoLa,SST2,SST5,NewsGroups,ToxigenDataset \
