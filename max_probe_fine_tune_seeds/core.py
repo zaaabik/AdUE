@@ -203,6 +203,8 @@ class AdueModel(L.LightningModule):
         self.train_roc_auc(outputs, errors)
         self.log('train/error_roc_auc', self.train_roc_auc, on_step=True, on_epoch=True, prog_bar=True)
 
+        self.log('train/mean_target', errors.mean(), on_step=True, on_epoch=True, prog_bar=True)
+
         cur_lr = self.trainer.optimizers[0].param_groups[0]['lr']
         self.log("lr", cur_lr, prog_bar=True, on_step=True)
 
@@ -244,6 +246,8 @@ class AdueModel(L.LightningModule):
 
         self.val_roc_auc(outputs, errors)
         self.log('val/error_roc_auc', self.val_roc_auc, on_step=True, on_epoch=True, prog_bar=True)
+
+        self.log('val/mean_target', errors.mean(), on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def on_validation_epoch_end(self) -> None:
