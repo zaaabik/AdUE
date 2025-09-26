@@ -398,7 +398,7 @@ def train_smooth_head_lightning(
         experiment_name=f'{log_params["model"]}_{log_params["dataset"]}',
         tracking_uri='sqlite:///mlflow/database.db'
     )
-    mlflow_logger.log_hyperparams(log_params)
+    mlflow_logger.log_hyperparams(cfg)
     mlflow_logger.log_metrics({
         'train/error_roc_auc_base_pred': roc_auc_score(train_errors, train_base_pred),
         'val/error_roc_auc_base_pred': roc_auc_score(val_errors, val_base_pred),
