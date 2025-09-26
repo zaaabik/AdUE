@@ -404,6 +404,7 @@ def train_smooth_head_lightning(
         'train/error_roc_auc_base_pred': roc_auc_score(train_errors, train_base_pred),
         'val/error_roc_auc_base_pred': roc_auc_score(val_errors, val_base_pred),
     })
+    mlflow_logger.log_hyperparams(log_params)
 
 
     trainer = L.Trainer(
