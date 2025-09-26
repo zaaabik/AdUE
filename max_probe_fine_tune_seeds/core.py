@@ -294,7 +294,8 @@ def train_smooth_head_lightning(
         reg_alpha=0.1,
         l2sp_alpha=0.01,
         smooth_batch_size=batch_size,
-        log_params=dict()
+        log_params=dict(),
+        cfg=None
 ):
     dataset = torch.utils.data.TensorDataset(train_features, train_errors, train_base_pred)
     def create_balanced_sampler(targets):
@@ -324,16 +325,25 @@ def train_smooth_head_lightning(
         )
 
         return sampler
-
-    train_loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=smooth_batch_size,
-        shuffle=True,
-        generator=generator,
-        num_workers=0,
-        pin_memory=False,
-        # sampler=create_balanced_sampler(train_errors)
-    )
+    if cfg.grid.get('balance_classes', False):
+        train_loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=smooth_batch_size,
+            shuffle=True,
+            generator=generator,
+            num_workers=0,
+            pin_memory=False,
+        )
+    else:
+        train_loader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=smooth_batch_size,
+            shuffle=False,
+            generator=generator,
+            num_workers=0,
+            pin_memory=False,
+            sampler=create_balanced_sampler(train_errors)
+        )
 
     val_dataset = torch.utils.data.TensorDataset(val_features, val_errors, val_base_pred)
     val_loader = torch.utils.data.DataLoader(
@@ -634,7 +644,8 @@ def search_hyperparameters_lightning(
                                         'lr': lr,
                                         'reg_alpha': reg_alpha,
                                         'l2sp_alpha': l2sp_alpha,
-                                    }
+                                    },
+                                    cfg=cfg
                                 )
                                 val_auc, predicted_val_pred, predicted_val_target = evaluate_smooth_head(
                                     candidate_head, val_features, val_errors, device
