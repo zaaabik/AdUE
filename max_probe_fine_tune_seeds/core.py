@@ -54,7 +54,7 @@ class EntropyClassifierHead(nn.Module):
         x = self.head(cls_token)
         if self.load_weights in ('cls_head', 'cls_random'):
             p = torch.softmax(x, dim=1)
-            entropy = (-p * torch.log2(p + 1e-8)).sum(dim=-1) / self.max_entropy
+            entropy = (-p * torch.log2(p + 1e-9)).sum(dim=-1) / self.max_entropy
             return torch.clamp(entropy, min=1e-9, max=1 - 1e-9)
         elif self.load_weights == 'linear_random':
             return torch.sigmoid(x[:, 0])
@@ -898,7 +898,7 @@ def get_data_for_training(logits, original_targets, head_type):
         num_classes = logits.shape[1]
         scale_factor = torch.log2(torch.tensor(num_classes))
         p = torch.softmax(logits, dim=-1)
-        base_prediction = ((-p * torch.log2(p + 1e-6)).sum(dim=1) / scale_factor)
+        base_prediction = ((-p * torch.log2(p + 1e-9)).sum(dim=1) / scale_factor)
     else:
         raise ValueError(f'head_type is {head_type}')
 
@@ -907,7 +907,7 @@ def get_data_for_training(logits, original_targets, head_type):
 
 def calculate_base_metrics(logits, errors):
     p = torch.softmax(logits, dim=-1)
-    entropy = (-p * torch.log2(p + 1e-8)).sum(dim=1)
+    entropy = (-p * torch.log2(p + 1e-9)).sum(dim=1)
     sr = 1 - p.amax(dim=-1)
 
     return {
