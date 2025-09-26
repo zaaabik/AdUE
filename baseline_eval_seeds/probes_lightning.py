@@ -102,6 +102,7 @@ class ProbeLightningModule(L.LightningModule):
         self.train_roc_auc(preds, y)
         self.log("train/loss", self.train_loss, on_step=True, on_epoch=True, prog_bar=True)
         self.log("train/auc", self.train_roc_auc, on_step=True, on_epoch=True, prog_bar=True)
+        self.log("train/mean_target", y.mean(), on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -112,6 +113,7 @@ class ProbeLightningModule(L.LightningModule):
         self.val_roc_auc(preds, y)
         self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=False)
         self.log("val/auc", self.val_roc_auc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/mean_target", y.mean(), on_step=True, on_epoch=True, prog_bar=True)
         return loss
 
     def on_validation_epoch_end(self) -> None:
@@ -166,7 +168,6 @@ def train_probe_lightning(
     callbacks = [
         L.pytorch.callbacks.EarlyStopping(monitor="val/auc", mode="max", patience=15),
         L.pytorch.callbacks.ModelCheckpoint(monitor="val/auc", mode="max", save_weights_only=True),
-
     ]
 
     trainer = L.Trainer(
