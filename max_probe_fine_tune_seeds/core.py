@@ -314,8 +314,8 @@ def train_smooth_head_lightning(
             if targets.ndim != 1:
                 raise ValueError("targets must be a 1D tensor")
             uniques = torch.unique(targets)
-            if not torch.all(uniques.isin(torch.tensor([0, 1], dtype=targets.dtype))):
-                raise ValueError("targets must be binary (only 0 and 1)")
+            # if not torch.all(uniques.isin(torch.tensor([0, 1], dtype=targets.dtype))):
+            #     raise ValueError("targets must be binary (only 0 and 1)")
             n0 = int((targets == 0).sum().item())
             n1 = int((targets == 1).sum().item())
             if n0 == 0 or n1 == 0:
