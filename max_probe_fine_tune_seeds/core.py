@@ -359,6 +359,7 @@ def train_smooth_head_lightning(
             pin_memory=False,
         )
     else:
+        print('balance_classes turn on')
         train_loader = torch.utils.data.DataLoader(
             dataset,
             batch_size=smooth_batch_size,
