@@ -24,7 +24,7 @@ class AttentionProbe(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
         self.q = nn.Linear(input_dim, 1, bias=False)
-        self.w = nn.Linear(input_dim, 1, bias=False)
+        self.w = nn.Linear(input_dim, 1, bias=True)
 
     @staticmethod
     def create_binary_mask(lengths, max_length=None):
