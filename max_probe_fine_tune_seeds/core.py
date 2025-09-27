@@ -22,7 +22,7 @@ generator = torch.Generator().manual_seed(42)
 
 
 class EntropyClassifierHead(nn.Module):
-    def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls'):
+    def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls_random'):
         super().__init__()
         if isinstance(original_lm_head, torch.nn.Linear):
             self.head = torch.nn.Linear(
@@ -61,7 +61,7 @@ class EntropyClassifierHead(nn.Module):
 
 
 class SmoothMaxClassifierHead(nn.Module):
-    def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls'):
+    def __init__(self, original_lm_head: nn.Linear, config, num_classes, lam: float = 100.0, load_weights: str = 'cls_random'):
         super().__init__()
         if isinstance(original_lm_head, torch.nn.Linear):
             self.head = torch.nn.Linear(
