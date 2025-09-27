@@ -576,6 +576,11 @@ def search_hyperparameters_lightning(
     best_state = None
     all_states = []
 
+    test_logits = test_logits.float()
+    train_logits = train_logits.float()
+    val_logits = val_logits.float()
+
+
     test_errors = test_logits.argmax(dim=-1) != test_original_targets
     base_eu_metrics = calculate_base_metrics(test_logits, test_errors)
 
