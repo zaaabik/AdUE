@@ -96,6 +96,11 @@ def train(cfg):
                 ).float().mean().item()
             )
 
+    state['train_logits'] = state['train_logits'].float()
+    state['val_logits'] = state['val_logits'].float()
+    state['test_logits'] = state['test_logits'].float()
+
+
     best_run, all_runs = search_hyperparameters_lightning(**state)
 
     current_output_dir = os.path.join(cfg.save_dir)
