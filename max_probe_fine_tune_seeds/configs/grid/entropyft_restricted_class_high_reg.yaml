@@ -8,4 +8,4 @@ load_weights: ['cls_head']
 head_type: ['entropy']
 restricted_classes: true
 balance_classes: false
-name: entropy_response_finetune_restricted_classes_balanced
+name: entropy_response_finetune_restricted_classes_high_reg
